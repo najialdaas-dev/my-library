@@ -123,10 +123,6 @@ export default function DashboardPage() {
     const file = e.target.files?.[0]
     if (!file) return
 
-    const formData = new FormData()
-    formData.append('file', file)
-    formData.append('folder', folder)
-
     if (folder === 'books') setBookFileUploading(true)
     else if (folder === 'covers') setCoverImageUploading(true)
     else if (folder === 'thumbnails') setThumbnailUploading(true)
@@ -136,95 +132,99 @@ export default function DashboardPage() {
     setErrorMsg('')
 
     try {
-      const res = await fetch('/api/upload', {
-        method: 'POST',
-        body: formData,
-      })
+      let publicUrl = ''
+      let finalFileName = file.name
+      let fileSizeStr = file.size.toString()
 
-      // Check if response is JSON before parsing
-      const contentType = res.headers.get('content-type')
-      if (!contentType || !contentType.includes('application/json')) {
-        const text = await res.text()
-        console.error('Non-JSON response:', text)
-        throw new Error('الخادم رجع استجابة غير متوقعة. يرجى المحاولة مرة أخرى.')
-      }
+      // Files larger than 2MB are uploaded directly via signed URL to bypass Vercel 4.5MB request limit
+      if (file.size > 2 * 1024 * 1024) {
+        console.log('Using direct client-side upload via signed URL to bypass server limits...')
+        
+        const signRes = await fetch('/api/upload/sign-url', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            fileName: file.name,
+            fileSize: file.size,
+            folder: folder,
+          }),
+        })
 
-      const data = await res.json()
-      if (!res.ok) throw new Error(data.error || 'فشل رفع الملف')
+        const signData = await signRes.json()
+        if (!signRes.ok) {
+          throw new Error(signData.error || 'فشل الحصول على رابط الرفع المباشر')
+        }
 
-      // Check if server returned a signed URL for direct upload
-      if (data.useDirectUpload) {
-        console.log('Using direct upload to Supabase...')
-
-        // Upload directly to Supabase using the signed URL
-        const uploadRes = await fetch(data.signedUrl, {
+        // Upload the file directly to Supabase using the signed URL
+        const uploadRes = await fetch(signData.signedUrl, {
           method: 'PUT',
           body: file,
           headers: {
-            'Content-Type': data.contentType,
+            'Content-Type': signData.contentType,
           },
         })
 
         if (!uploadRes.ok) {
-          throw new Error('فشل الرفع المباشر إلى Supabase')
+          throw new Error('فشل الرفع المباشر للملف إلى مساحة التخزين')
         }
 
-        // Construct the public URL
-        const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || ''
-        const publicUrl = `${supabaseUrl}/storage/v1/object/public/${data.bucket}/${data.path}`
-
-        setSuccessMsg(`🎉 تم رفع الملف [${file.name}] بنجاح وتخزينه بأمان في التخزين السحابي!`)
-
-        if (folder === 'books') {
-          setBookForm((prev) => ({
-            ...prev,
-            fileUrl: publicUrl,
-            fileName: data.fileName,
-            fileSize: data.fileSize.toString(),
-          }))
-        } else if (folder === 'covers') {
-          setBookForm((prev) => ({
-            ...prev,
-            coverImage: publicUrl,
-          }))
-        } else if (folder === 'thumbnails') {
-          setTutorialForm((prev) => ({
-            ...prev,
-            thumbnail: publicUrl,
-          }))
-        } else if (folder === 'videos') {
-          setTutorialForm((prev) => ({
-            ...prev,
-            videoUrl: publicUrl,
-          }))
-        }
+        publicUrl = signData.publicUrl
+        finalFileName = signData.fileName
       } else {
-        // Server uploaded the file directly
-        setSuccessMsg(`🎉 تم رفع الملف [${file.name}] بنجاح وتخزينه بأمان في التخزين السحابي!`)
+        // Small files (<2MB): upload via Next.js server route
+        console.log('Using server-side upload for small file...')
+        const formData = new FormData()
+        formData.append('file', file)
+        formData.append('folder', folder)
 
-        if (folder === 'books') {
-          setBookForm((prev) => ({
-            ...prev,
-            fileUrl: data.fileUrl,
-            fileName: data.fileName,
-            fileSize: data.fileSize.toString(),
-          }))
-        } else if (folder === 'covers') {
-          setBookForm((prev) => ({
-            ...prev,
-            coverImage: data.fileUrl,
-          }))
-        } else if (folder === 'thumbnails') {
-          setTutorialForm((prev) => ({
-            ...prev,
-            thumbnail: data.fileUrl,
-          }))
-        } else if (folder === 'videos') {
-          setTutorialForm((prev) => ({
-            ...prev,
-            videoUrl: data.fileUrl,
-          }))
+        const res = await fetch('/api/upload', {
+          method: 'POST',
+          body: formData,
+        })
+
+        const contentType = res.headers.get('content-type')
+        if (!contentType || !contentType.includes('application/json')) {
+          const text = await res.text()
+          console.error('Non-JSON response:', text)
+          throw new Error('الخادم رجع استجابة غير متوقعة. يرجى المحاولة مرة أخرى.')
         }
+
+        const data = await res.json()
+        if (!res.ok) {
+          throw new Error(data.error || 'فشل رفع الملف')
+        }
+
+        publicUrl = data.fileUrl
+        finalFileName = data.fileName
+        fileSizeStr = data.fileSize.toString()
+      }
+
+      setSuccessMsg(`🎉 تم رفع الملف [${file.name}] بنجاح وتخزينه بأمان في التخزين السحابي!`)
+
+      if (folder === 'books') {
+        setBookForm((prev) => ({
+          ...prev,
+          fileUrl: publicUrl,
+          fileName: finalFileName,
+          fileSize: fileSizeStr,
+        }))
+      } else if (folder === 'covers') {
+        setBookForm((prev) => ({
+          ...prev,
+          coverImage: publicUrl,
+        }))
+      } else if (folder === 'thumbnails') {
+        setTutorialForm((prev) => ({
+          ...prev,
+          thumbnail: publicUrl,
+        }))
+      } else if (folder === 'videos') {
+        setTutorialForm((prev) => ({
+          ...prev,
+          videoUrl: publicUrl,
+        }))
       }
     } catch (err) {
       const msg = err instanceof Error ? err.message : 'حدث خطأ غير متوقع أثناء رفع الملف'
