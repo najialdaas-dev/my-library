@@ -1,22 +1,14 @@
 'use client'
 
 import Link from 'next/link'
-import { useEffect, useState } from 'react'
+import { useState } from 'react'
 import { useRouter } from 'next/navigation'
-import { Search, Compass, BookOpen, Layers, LayoutDashboard, Menu, X, LibraryBig } from 'lucide-react'
+import { Search, Compass, BookOpen, Layers, Menu, X, LibraryBig } from 'lucide-react'
 
 export function Navbar() {
-  const [isAdmin, setIsAdmin] = useState(false)
   const [isOpen, setIsOpen] = useState(false)
   const [searchQuery, setSearchQuery] = useState('')
   const router = useRouter()
-
-  useEffect(() => {
-    fetch('/api/auth/check')
-      .then((res) => res.json())
-      .then((data) => setIsAdmin(data.isAdmin === true))
-      .catch(() => setIsAdmin(false))
-  }, [])
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault()
@@ -80,16 +72,6 @@ export function Navbar() {
               <Search className="absolute right-2.5 top-2.5 w-4 h-4 text-slate-400" />
             </form>
             
-            {isAdmin && (
-              <Link 
-                href="/dashboard" 
-                className="hidden md:flex bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-lg font-medium text-sm transition-colors duration-200 items-center gap-1.5"
-              >
-                <LayoutDashboard className="w-4 h-4" />
-                لوحة التحكم
-              </Link>
-            )}
-
             <button
               onClick={() => setIsOpen(!isOpen)}
               className="md:hidden p-2 rounded-lg text-slate-600 hover:bg-slate-100 transition-colors duration-200"
@@ -144,17 +126,6 @@ export function Navbar() {
               الأقسام
               <Layers className="w-4 h-4 text-slate-400" />
             </Link>
-
-            {isAdmin && (
-              <Link 
-                href="/dashboard" 
-                onClick={() => setIsOpen(false)}
-                className="flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg bg-indigo-600 hover:bg-indigo-700 text-white font-medium transition-colors duration-200"
-              >
-                <LayoutDashboard className="w-4 h-4" />
-                لوحة التحكم
-              </Link>
-            )}
 
           </div>
         </div>
