@@ -1,6 +1,7 @@
 import { prisma } from '@/lib/db'
 import { Prisma } from '@prisma/client'
 import { NextRequest, NextResponse } from 'next/server'
+import { isAdminAuthenticated } from '@/lib/auth'
 
 export async function GET(request: NextRequest) {
   try {
@@ -73,6 +74,9 @@ export async function GET(request: NextRequest) {
 // POST - إضافة كتاب جديد (Admin only)
 export async function POST(request: NextRequest) {
   try {
+    if (!(await isAdminAuthenticated())) {
+      return NextResponse.json({ error: 'غير مصرح لك بإتمام هذه العملية (ممنوع)' }, { status: 401 })
+    }
     const body = await request.json()
     
     const book = await prisma.book.create({
@@ -105,6 +109,9 @@ export async function POST(request: NextRequest) {
 // DELETE - حذف كتاب (Admin only)
 export async function DELETE(request: NextRequest) {
   try {
+    if (!(await isAdminAuthenticated())) {
+      return NextResponse.json({ error: 'غير مصرح لك بإتمام هذه العملية (ممنوع)' }, { status: 401 })
+    }
     const { searchParams } = new URL(request.url)
     const id = searchParams.get('id')
 

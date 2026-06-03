@@ -1,6 +1,7 @@
 import { prisma } from '@/lib/db'
 import { Prisma } from '@prisma/client'
 import { NextRequest, NextResponse } from 'next/server'
+import { isAdminAuthenticated } from '@/lib/auth'
 
 export async function GET(request: NextRequest) {
   try {
@@ -65,6 +66,9 @@ export async function GET(request: NextRequest) {
 // POST - إضافة شرح جديد (Admin only)
 export async function POST(request: NextRequest) {
   try {
+    if (!(await isAdminAuthenticated())) {
+      return NextResponse.json({ error: 'غير مصرح لك بإتمام هذه العملية (ممنوع)' }, { status: 401 })
+    }
     const body = await request.json()
     
     // Auto-generate videoId from youtube URL if present
@@ -108,6 +112,9 @@ export async function POST(request: NextRequest) {
 // DELETE - حذف شرح (Admin only)
 export async function DELETE(request: NextRequest) {
   try {
+    if (!(await isAdminAuthenticated())) {
+      return NextResponse.json({ error: 'غير مصرح لك بإتمام هذه العملية (ممنوع)' }, { status: 401 })
+    }
     const { searchParams } = new URL(request.url)
     const id = searchParams.get('id')
 

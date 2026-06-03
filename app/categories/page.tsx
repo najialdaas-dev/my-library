@@ -3,7 +3,7 @@ import Link from 'next/link'
 import { Navbar } from '@/components/Navbar'
 import { BookOpen, Video } from 'lucide-react'
 
-export const dynamic = 'force-dynamic'
+export const revalidate = 60
 
 async function getCategoriesWithCounts() {
   const categories = await prisma.category.findMany({

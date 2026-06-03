@@ -4,8 +4,9 @@ import Link from 'next/link'
 import Image from 'next/image'
 import { Navbar } from '@/components/Navbar'
 import { ArrowRight, Clock, Eye, Calendar, User, Film } from 'lucide-react'
+import { ViewTracker } from '@/components/ViewTracker'
 
-export const dynamic = 'force-dynamic'
+export const revalidate = 60
 
 async function getTutorial(slug: string) {
   const decodedSlug = decodeURIComponent(slug)
@@ -24,18 +25,10 @@ export default async function TutorialDetailsPage({ params }: { params: Promise<
     notFound()
   }
 
-  try {
-    await prisma.tutorial.update({
-      where: { id: tutorial.id },
-      data: { viewCount: { increment: 1 } },
-    })
-  } catch (err) {
-    console.error('Failed to increment view count:', err)
-  }
-
   return (
     <div className="min-h-screen bg-slate-50 text-slate-900 pb-20">
       <Navbar />
+      <ViewTracker id={tutorial.id} type="tutorial" />
 
       <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
         {/* Back */}

@@ -1,5 +1,6 @@
 import { prisma } from '@/lib/db'
 import { NextRequest, NextResponse } from 'next/server'
+import { isAdminAuthenticated } from '@/lib/auth'
 
 export async function GET() {
   try {
@@ -19,6 +20,9 @@ export async function GET() {
 // POST - إضافة قسم جديد (Admin only)
 export async function POST(request: NextRequest) {
   try {
+    if (!(await isAdminAuthenticated())) {
+      return NextResponse.json({ error: 'غير مصرح لك بإتمام هذه العملية (ممنوع)' }, { status: 401 })
+    }
     const body = await request.json()
     const { name, slug, description, color, icon } = body
 
@@ -51,6 +55,9 @@ export async function POST(request: NextRequest) {
 // DELETE - حذف قسم (Admin only)
 export async function DELETE(request: NextRequest) {
   try {
+    if (!(await isAdminAuthenticated())) {
+      return NextResponse.json({ error: 'غير مصرح لك بإتمام هذه العملية (ممنوع)' }, { status: 401 })
+    }
     const { searchParams } = new URL(request.url)
     const id = searchParams.get('id')
 

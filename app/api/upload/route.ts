@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { uploadToSupabase, getSignedUploadUrl } from '@/lib/supabase'
+import { isAdminAuthenticated } from '@/lib/auth'
 
 // Content-type mapping for common file extensions
 const CONTENT_TYPES: Record<string, string> = {
@@ -23,6 +24,9 @@ const DIRECT_UPLOAD_THRESHOLD = 10 * 1024 * 1024
 export async function POST(request: NextRequest) {
   console.log('=== Upload endpoint called ===')
   try {
+    if (!(await isAdminAuthenticated())) {
+      return NextResponse.json({ error: 'غير مصرح لك بإتمام هذه العملية (ممنوع)' }, { status: 401 })
+    }
     const formData = await request.formData()
     const file = formData.get('file') as File | null
     const folder = formData.get('folder') as string || 'books' // 'books' or 'covers' or 'thumbnails'

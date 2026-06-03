@@ -5,8 +5,9 @@ import Image from 'next/image'
 import { Navbar } from '@/components/Navbar'
 import { ArrowRight, Download, Eye, Calendar, Globe, FileText, Cpu, Star, CircleDot } from 'lucide-react'
 import { DownloadButton } from '@/components/DownloadButton'
+import { ViewTracker } from '@/components/ViewTracker'
 
-export const dynamic = 'force-dynamic'
+export const revalidate = 60
 
 async function getBook(slug: string) {
   const decodedSlug = decodeURIComponent(slug)
@@ -25,15 +26,6 @@ export default async function BookDetailsPage({ params }: { params: Promise<{ sl
     notFound()
   }
 
-  try {
-    await prisma.book.update({
-      where: { id: book.id },
-      data: { viewCount: { increment: 1 } },
-    })
-  } catch (err) {
-    console.error('Failed to increment view count:', err)
-  }
-
   const fileSizeMB = (book.fileSize / (1024 * 1024)).toFixed(2)
 
   const difficultyLabel = {
@@ -45,6 +37,7 @@ export default async function BookDetailsPage({ params }: { params: Promise<{ sl
   return (
     <div className="min-h-screen bg-slate-50 text-slate-900 pb-20">
       <Navbar />
+      <ViewTracker id={book.id} type="book" />
 
       <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
         {/* Back */}

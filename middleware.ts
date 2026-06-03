@@ -10,6 +10,39 @@ async function getExpectedToken(password: string) {
 
 export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl
+  const userAgent = request.headers.get('user-agent')?.toLowerCase() || ''
+
+  // قائمة بالـ User-Agents الممنوعة (السكريبتات التلقائية، بوتات الذكاء الاصطناعي الضارة، وأدوات الفحص)
+  const blockedAgents = [
+    'python',         // سكريبتات بايثون (requests, urllib, etc.)
+    'curl',           // أداة curl
+    'wget',           // أداة wget
+    'urllib',         // مكتبة urllib في بايثون
+    'scrapy',         // إطار عمل scrapy للكشط
+    'aiohttp',        // مكتبة aiohttp في بايثون
+    'httpie',         // أداة httpie
+    'selenium',       // أداة أتمتة المتصفح
+    'puppeteer',      // أداة أتمتة المتصفح
+    'headlesschrome', // كروم بدون واجهة رسومية
+    'gptbot',         // بوت تدريب OpenAI
+    'claudebot',      // بوت تدريب Anthropic
+    'perplexitybot',  // بوت Perplexity
+    'cohere-ai',      // بوت Cohere AI
+    'bytespider',     // بوت بايت دانس (تيك توك)
+    'ccbot',          // Common Crawl bot
+  ]
+
+  const isBlocked = blockedAgents.some(agent => userAgent.includes(agent))
+  
+  if (isBlocked) {
+    return new NextResponse(
+      JSON.stringify({ error: 'Access Denied: Request blocked for security reasons.' }),
+      { 
+        status: 403, 
+        headers: { 'Content-Type': 'application/json' } 
+      }
+    )
+  }
 
   // Only protect /dashboard routes
   if (pathname.startsWith('/dashboard')) {
@@ -36,5 +69,7 @@ export async function middleware(request: NextRequest) {
 }
 
 export const config = {
-  matcher: ['/dashboard/:path*'],
+  matcher: [
+    '/((?!_next/static|_next/image|images|favicon.ico).*)',
+  ],
 }

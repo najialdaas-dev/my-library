@@ -6,7 +6,7 @@ import { Navbar } from '@/components/Navbar'
 import { Book, Tutorial } from '@/lib/types'
 import { ArrowLeft, BookOpen, Video, FolderOpen } from 'lucide-react'
 
-export const dynamic = 'force-dynamic'
+export const revalidate = 60
 
 async function getLatestContent() {
   const [books, tutorials, categories, bookCount, tutorialCount] = await Promise.all([

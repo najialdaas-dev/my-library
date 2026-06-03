@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
+import { isAdminAuthenticated } from '@/lib/auth'
 
 // Content-type mapping for common file extensions
 const CONTENT_TYPES: Record<string, string> = {
@@ -27,6 +28,9 @@ const FOLDER_MAP: Record<string, { bucket: string; prefix: string }> = {
 
 export async function POST(request: NextRequest) {
   try {
+    if (!(await isAdminAuthenticated())) {
+      return NextResponse.json({ error: 'غير مصرح لك بإتمام هذه العملية (ممنوع)' }, { status: 401 })
+    }
     const { fileName, fileSize, folder } = await request.json()
 
     if (!fileName || !fileSize || !folder) {
