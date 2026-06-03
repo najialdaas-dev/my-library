@@ -5,6 +5,7 @@ import Image from 'next/image'
 import { Navbar } from '@/components/Navbar'
 import { ArrowRight, Clock, Eye, Calendar, User, Film } from 'lucide-react'
 import { ViewTracker } from '@/components/ViewTracker'
+import { ScrollToTop } from '@/components/ScrollToTop'
 
 export const revalidate = 60
 
@@ -29,6 +30,7 @@ export default async function TutorialDetailsPage({ params }: { params: Promise<
     <div className="min-h-screen bg-slate-50 text-slate-900 pb-20">
       <Navbar />
       <ViewTracker id={tutorial.id} type="tutorial" />
+      <ScrollToTop />
 
       <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
         {/* Back */}

@@ -6,6 +6,7 @@ import { Navbar } from '@/components/Navbar'
 import { ArrowRight, Download, Eye, Calendar, Globe, FileText, Cpu, Star, CircleDot } from 'lucide-react'
 import { DownloadButton } from '@/components/DownloadButton'
 import { ViewTracker } from '@/components/ViewTracker'
+import { ScrollToTop } from '@/components/ScrollToTop'
 
 export const revalidate = 60
 
@@ -38,6 +39,7 @@ export default async function BookDetailsPage({ params }: { params: Promise<{ sl
     <div className="min-h-screen bg-slate-50 text-slate-900 pb-20">
       <Navbar />
       <ViewTracker id={book.id} type="book" />
+      <ScrollToTop />
 
       <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
         {/* Back */}
