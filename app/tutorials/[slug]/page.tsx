@@ -67,13 +67,13 @@ export default async function TutorialDetailsPage({ params }: { params: Promise<
               />
             </div>
           ) : tutorial.thumbnail ? (
-            <div className="relative h-80 w-full bg-slate-200 overflow-hidden">
+            <div className="relative aspect-video w-full bg-slate-50/50 overflow-hidden border-b border-slate-100">
               <Image
                 src={tutorial.thumbnail}
                 alt={tutorial.title}
                 fill
                 sizes="(max-width: 1000px) 100vw, 1000px"
-                className="object-cover"
+                className="object-contain"
               />
             </div>
           ) : null}

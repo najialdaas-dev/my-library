@@ -18,14 +18,14 @@ export function BookCard({ book }: { book: Book }) {
         
         {/* Cover */}
         <div>
-          <div className="relative h-52 bg-slate-100 overflow-hidden">
+          <div className="relative h-64 bg-slate-50/80 flex items-center justify-center overflow-hidden border-b border-slate-100">
             {book.coverImage ? (
               <Image
                 src={book.coverImage}
                 alt={book.title}
                 fill
                 sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
-                className="object-cover group-hover:scale-[1.03] transition-transform duration-500"
+                className="object-contain p-3 group-hover:scale-[1.03] transition-transform duration-500"
               />
             ) : (
               <div className="absolute inset-0 bg-gradient-to-br from-indigo-50 to-slate-100 flex items-center justify-center">

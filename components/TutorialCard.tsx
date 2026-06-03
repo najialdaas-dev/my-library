@@ -10,14 +10,14 @@ export function TutorialCard({ tutorial }: { tutorial: Tutorial }) {
         
         <div>
           {/* Thumbnail */}
-          <div className="relative h-48 bg-slate-100 overflow-hidden">
+          <div className="relative aspect-video bg-slate-50 overflow-hidden border-b border-slate-100">
             {tutorial.thumbnail ? (
               <Image
                 src={tutorial.thumbnail}
                 alt={tutorial.title}
                 fill
                 sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
-                className="object-cover group-hover:scale-[1.03] transition-transform duration-500"
+                className="object-contain group-hover:scale-[1.03] transition-transform duration-500"
               />
             ) : (
               <div className="absolute inset-0 bg-gradient-to-br from-purple-50 to-slate-100 flex items-center justify-center">

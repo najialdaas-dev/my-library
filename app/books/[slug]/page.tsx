@@ -64,7 +64,7 @@ export default async function BookDetailsPage({ params }: { params: Promise<{ sl
                     alt={book.title}
                     fill
                     sizes="(max-width: 768px) 100vw, 33vw"
-                    className="object-cover"
+                    className="object-contain p-2"
                   />
                 ) : (
                   <CircleDot className="w-12 h-12 text-slate-200" />
