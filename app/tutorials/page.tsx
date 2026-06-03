@@ -124,9 +124,23 @@ export default function TutorialsPage() {
 
         {/* Content */}
         {loading ? (
-          <div className="flex flex-col items-center justify-center py-20">
-            <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-purple-600 mb-3"></div>
-            <p className="text-slate-500 text-sm">جاري التحميل...</p>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 mb-12">
+            {[...Array(6)].map((_, i) => (
+              <div key={i} className="bg-white rounded-2xl border border-slate-200/80 shadow-sm overflow-hidden h-full flex flex-col justify-between animate-pulse">
+                <div>
+                  <div className="aspect-video bg-slate-100/60" />
+                  <div className="p-5 space-y-3">
+                    <div className="h-5 w-3/4 bg-slate-200 rounded ml-auto" />
+                    <div className="h-4 w-full bg-slate-200 rounded ml-auto" />
+                    <div className="h-4 w-16 bg-slate-200 rounded ml-auto" />
+                  </div>
+                </div>
+                <div className="px-5 pb-4 pt-3 border-t border-slate-100 flex justify-between items-center">
+                  <div className="h-4 w-12 bg-slate-200 rounded" />
+                  <div className="h-4 w-16 bg-slate-200 rounded" />
+                </div>
+              </div>
+            ))}
           </div>
         ) : tutorials.length === 0 ? (
           <div className="text-center py-20">

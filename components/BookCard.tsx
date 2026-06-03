@@ -1,8 +1,9 @@
 'use client'
 
+import { useState } from 'react'
 import Link from 'next/link'
 import Image from 'next/image'
-import { Download, Eye, ArrowLeft, Star, CircleDot } from 'lucide-react'
+import { Download, Eye, ArrowLeft, Star, CircleDot, Loader2 } from 'lucide-react'
 import { Book } from '@/lib/types'
 import { useNavigationLoader } from '@/components/NavigationLoader'
 
@@ -13,13 +14,17 @@ const difficultyConfig = {
 } as const
 
 export function BookCard({ book }: { book: Book }) {
+  const [clicked, setClicked] = useState(false)
   const { startLoading } = useNavigationLoader()
   const difficulty = difficultyConfig[book.difficulty as keyof typeof difficultyConfig]
 
   return (
     <Link 
       href={`/books/${book.slug}`} 
-      onClick={() => startLoading('book', book.title)}
+      onClick={() => {
+        setClicked(true)
+        startLoading('book', book.title)
+      }}
       className="group block h-full"
     >
       <div className="bg-white rounded-2xl border border-slate-200/80 shadow-sm group-hover:shadow-md group-hover:border-indigo-300 group-hover:-translate-y-1.5 active:scale-[0.985] active:translate-y-0 transition-all duration-300 ease-out overflow-hidden h-full flex flex-col justify-between">
@@ -88,10 +93,17 @@ export function BookCard({ book }: { book: Book }) {
             </div>
           </div>
 
-          <span className="text-xs font-medium text-indigo-600 flex items-center gap-1">
-            اقرأ المزيد
-            <ArrowLeft className="w-3 h-3 group-hover:-translate-x-0.5 transition-transform duration-200" />
-          </span>
+          {clicked ? (
+            <span className="text-xs font-medium text-slate-500 flex items-center gap-1.5">
+              <Loader2 className="w-3.5 h-3.5 animate-spin text-indigo-500" />
+              جاري الفتح...
+            </span>
+          ) : (
+            <span className="text-xs font-medium text-indigo-600 flex items-center gap-1">
+              اقرأ المزيد
+              <ArrowLeft className="w-3 h-3 group-hover:-translate-x-0.5 transition-transform duration-200" />
+            </span>
+          )}
         </div>
 
       </div>
