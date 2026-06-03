@@ -1,6 +1,6 @@
 'use client'
 
-import React, { createContext, useContext, useState, useEffect, Suspense, useCallback } from 'react'
+import React, { createContext, useContext, useState, useEffect, Suspense, useCallback, useRef } from 'react'
 import { usePathname, useSearchParams } from 'next/navigation'
 import { Loader2 } from 'lucide-react'
 
@@ -27,21 +27,42 @@ function NavigationEvents({ stopTransition }: { stopTransition: () => void }) {
 export function TransitionProvider({ children }: { children: React.ReactNode }) {
   const [isLoading, setIsLoading] = useState(false)
   const [message, setMessage] = useState('')
+  
+  const MIN_DISPLAY_TIME = 800; // Minimum 0.8 seconds display for professional UX
+  const transitionStartTime = useRef<number>(0);
+  const timeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   const startTransition = useCallback((msg: string) => {
+    if (timeoutRef.current) clearTimeout(timeoutRef.current);
     setMessage(msg)
     setIsLoading(true)
+    transitionStartTime.current = Date.now();
   }, [])
 
   const stopTransition = useCallback(() => {
-    setIsLoading(false)
+    const timeElapsed = Date.now() - transitionStartTime.current;
+    
+    // If the data loaded instantly (e.g. from cache), ensure the screen stays for a minimum time
+    if (timeElapsed < MIN_DISPLAY_TIME && transitionStartTime.current !== 0) {
+      const timeRemaining = MIN_DISPLAY_TIME - timeElapsed;
+      timeoutRef.current = setTimeout(() => {
+        setIsLoading(false);
+        transitionStartTime.current = 0;
+      }, timeRemaining);
+    } else {
+      setIsLoading(false);
+      transitionStartTime.current = 0;
+    }
   }, [])
 
   // Listen for the "popstate" event to handle browser back/forward buttons
   useEffect(() => {
     const handlePopState = () => stopTransition()
     window.addEventListener('popstate', handlePopState)
-    return () => window.removeEventListener('popstate', handlePopState)
+    return () => {
+      window.removeEventListener('popstate', handlePopState)
+      if (timeoutRef.current) clearTimeout(timeoutRef.current)
+    }
   }, [stopTransition])
 
   // Removed overflow:hidden to prevent layout shifts/scroll jumping

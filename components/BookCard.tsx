@@ -21,9 +21,7 @@ export function BookCard({ book }: { book: Book }) {
   const handleNavigation = (e: React.MouseEvent) => {
     e.preventDefault()
     startTransition(`جاري تحميل كتاب: ${book.title}`)
-    setTimeout(() => {
-      router.push(`/books/${book.slug}`)
-    }, 250) // Small delay to guarantee the loading screen appears before Next.js instantly swaps cached routes
+    router.push(`/books/${book.slug}`)
   }
 
   return (
