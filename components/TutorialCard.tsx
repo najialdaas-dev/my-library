@@ -16,7 +16,7 @@ export function TutorialCard({ tutorial }: { tutorial: Tutorial }) {
     startTransition(`جاري تحميل شرح: ${tutorial.title}`)
     setTimeout(() => {
       router.push(`/tutorials/${tutorial.slug}`)
-    }, 50)
+    }, 350)
   }
 
   return (
