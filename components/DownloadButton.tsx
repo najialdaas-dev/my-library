@@ -2,6 +2,7 @@
 
 import { useState } from 'react'
 import { Download, Loader2 } from 'lucide-react'
+import { useTransitionContext } from '@/app/TransitionProvider'
 
 type DownloadButtonProps = {
   bookId: string
@@ -11,12 +12,15 @@ type DownloadButtonProps = {
 
 export function DownloadButton({ bookId, fileUrl, fileName }: DownloadButtonProps) {
   const [downloading, setDownloading] = useState(false)
+  const { startTransition, stopTransition } = useTransitionContext()
 
   const handleDownload = async (e: React.MouseEvent) => {
     e.preventDefault()
     if (downloading) return
 
     setDownloading(true)
+    startTransition(`جاري تحضير ملف التحميل...`)
+    
     try {
       await fetch('/api/analytics/download', {
         method: 'POST',
@@ -38,6 +42,7 @@ export function DownloadButton({ bookId, fileUrl, fileName }: DownloadButtonProp
       window.open(fileUrl, '_blank')
     } finally {
       setDownloading(false)
+      stopTransition()
     }
   }
 

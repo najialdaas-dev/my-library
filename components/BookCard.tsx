@@ -1,12 +1,11 @@
 'use client'
 
-import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import Image from 'next/image'
-import { usePathname } from 'next/navigation'
-import { Download, Eye, ArrowLeft, Star, CircleDot, Loader2 } from 'lucide-react'
+import { useRouter } from 'next/navigation'
+import { Download, Eye, ArrowLeft, Star, CircleDot } from 'lucide-react'
 import { Book } from '@/lib/types'
-import { useNavigationLoader } from '@/components/NavigationLoader'
+import { useTransitionContext } from '@/app/TransitionProvider'
 
 const difficultyConfig = {
   Beginner: { label: 'مبتدئ', color: 'text-emerald-600 bg-emerald-50' },
@@ -15,24 +14,18 @@ const difficultyConfig = {
 } as const
 
 export function BookCard({ book }: { book: Book }) {
-  const [clicked, setClicked] = useState(false)
-  const { startLoading } = useNavigationLoader()
-  const pathname = usePathname()
   const difficulty = difficultyConfig[book.difficulty as keyof typeof difficultyConfig]
+  const router = useRouter()
+  const { startTransition } = useTransitionContext()
 
-  useEffect(() => {
-    setClicked(false)
-  }, [pathname])
+  const handleNavigation = (e: React.MouseEvent) => {
+    e.preventDefault()
+    startTransition(`جاري تحميل كتاب: ${book.title}`)
+    router.push(`/books/${book.slug}`)
+  }
 
   return (
-    <Link 
-      href={`/books/${book.slug}`} 
-      onClick={() => {
-        setClicked(true)
-        startLoading('book', book.title)
-      }}
-      className="group block h-full"
-    >
+    <Link href={`/books/${book.slug}`} onClick={handleNavigation} className="group block h-full cursor-pointer">
       <div className="bg-white rounded-2xl border border-slate-200/80 shadow-sm group-hover:shadow-md group-hover:border-indigo-300 group-hover:-translate-y-1.5 active:scale-[0.985] active:translate-y-0 transition-all duration-300 ease-out overflow-hidden h-full flex flex-col justify-between">
         
         {/* Cover */}
@@ -99,17 +92,10 @@ export function BookCard({ book }: { book: Book }) {
             </div>
           </div>
 
-          {clicked ? (
-            <span className="text-xs font-medium text-slate-500 flex items-center gap-1.5">
-              <Loader2 className="w-3.5 h-3.5 animate-spin text-indigo-500" />
-              جاري الفتح...
-            </span>
-          ) : (
-            <span className="text-xs font-medium text-indigo-600 flex items-center gap-1">
-              اقرأ المزيد
-              <ArrowLeft className="w-3 h-3 group-hover:-translate-x-0.5 transition-transform duration-200" />
-            </span>
-          )}
+          <span className="text-xs font-medium text-indigo-600 flex items-center gap-1">
+            اقرأ المزيد
+            <ArrowLeft className="w-3 h-3 group-hover:-translate-x-0.5 transition-transform duration-200" />
+          </span>
         </div>
 
       </div>

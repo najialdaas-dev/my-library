@@ -1,34 +1,53 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { BookCard } from '@/components/BookCard'
 import { Book, Category } from '@/lib/types'
 import { Navbar } from '@/components/Navbar'
 import { Search, ChevronLeft, ChevronRight, SlidersHorizontal } from 'lucide-react'
 
-// ذاكرة تخزين مؤقتة خارج المكون للاحتفاظ بالكتب والأقسام عند التنقل والعودة لمنع وميض الصفحة وقفزات السكرول
-let cachedBooks: Book[] = []
-let cachedCategories: Category[] = []
-let cachedTotalPages = 1
-
 export default function BooksPage() {
-  const [books, setBooks] = useState<Book[]>(cachedBooks)
-  const [categories, setCategories] = useState<Category[]>(cachedCategories)
-  const [loading, setLoading] = useState(cachedBooks.length === 0)
-  const [search, setSearch] = useState('')
-  const [selectedCategory, setSelectedCategory] = useState('')
-  const [difficulty, setDifficulty] = useState('')
-  const [page, setPage] = useState(1)
-  const [totalPages, setTotalPages] = useState(cachedTotalPages)
+  const [categories, setCategories] = useState<Category[]>([])
+  
+  // State Initialization from sessionStorage
+  const [books, setBooks] = useState<Book[]>(() => {
+    if (typeof window !== 'undefined') {
+      const cached = sessionStorage.getItem('books_state_data')
+      if (cached) return JSON.parse(cached)
+    }
+    return []
+  })
+  const [search, setSearch] = useState(() => {
+    if (typeof window !== 'undefined') return sessionStorage.getItem('books_state_search') || ''
+    return ''
+  })
+  const [selectedCategory, setSelectedCategory] = useState(() => {
+    if (typeof window !== 'undefined') return sessionStorage.getItem('books_state_category') || ''
+    return ''
+  })
+  const [difficulty, setDifficulty] = useState(() => {
+    if (typeof window !== 'undefined') return sessionStorage.getItem('books_state_difficulty') || ''
+    return ''
+  })
+  const [page, setPage] = useState(() => {
+    if (typeof window !== 'undefined') return Number(sessionStorage.getItem('books_state_page')) || 1
+    return 1
+  })
+  const [totalPages, setTotalPages] = useState(() => {
+    if (typeof window !== 'undefined') return Number(sessionStorage.getItem('books_state_total')) || 1
+    return 1
+  })
+  
+  const [loading, setLoading] = useState(() => books.length === 0)
+  
+  const abortControllerRef = useRef<AbortController | null>(null)
 
   useEffect(() => {
     const fetchCategories = async () => {
-      if (cachedCategories.length > 0) return
       try {
         const res = await fetch('/api/categories')
         const data = await res.json()
         setCategories(data || [])
-        cachedCategories = data || []
       } catch (err) {
         console.error('Error fetching categories:', err)
       }
@@ -37,12 +56,21 @@ export default function BooksPage() {
   }, [])
 
   useEffect(() => {
+    // Save state to session storage
+    if (typeof window !== 'undefined') {
+      sessionStorage.setItem('books_state_search', search)
+      sessionStorage.setItem('books_state_category', selectedCategory)
+      sessionStorage.setItem('books_state_difficulty', difficulty)
+      sessionStorage.setItem('books_state_page', page.toString())
+    }
+
     const fetchBooks = async () => {
-      // إظهار الهيكل البراق فقط عند تغير الفلاتر أو عند التحميل الأول
-      const isInitialEmptyFilters = !search && !difficulty && !selectedCategory && page === 1;
-      if (!isInitialEmptyFilters || cachedBooks.length === 0) {
-        setLoading(true)
+      if (abortControllerRef.current) {
+        abortControllerRef.current.abort()
       }
+      abortControllerRef.current = new AbortController()
+
+      setLoading(true)
       try {
         const params = new URLSearchParams()
         if (search) params.append('search', search)
@@ -51,23 +79,25 @@ export default function BooksPage() {
         params.append('page', page.toString())
         params.append('limit', '9')
 
-        const response = await fetch(`/api/books?${params}`)
+        const response = await fetch(`/api/books?${params}`, {
+          signal: abortControllerRef.current.signal
+        })
+        
         const data = await response.json()
-        const fetchedBooks = data.data || []
-        setBooks(fetchedBooks)
+        const newBooks = data.data || []
+        const newTotalPages = data.pagination?.pages || 1
         
-        if (isInitialEmptyFilters) {
-          cachedBooks = fetchedBooks
-        }
+        setBooks(newBooks)
+        setTotalPages(newTotalPages)
         
-        if (data.pagination) {
-          const pages = data.pagination.pages || 1
-          setTotalPages(pages)
-          if (isInitialEmptyFilters) {
-            cachedTotalPages = pages
-          }
+        if (typeof window !== 'undefined') {
+          sessionStorage.setItem('books_state_data', JSON.stringify(newBooks))
+          sessionStorage.setItem('books_state_total', newTotalPages.toString())
         }
-      } catch (error) {
+      } catch (error: unknown) {
+        if (error instanceof Error && error.name === 'AbortError') {
+          return
+        }
         console.error('Error fetching books:', error)
       } finally {
         setLoading(false)
@@ -124,9 +154,9 @@ export default function BooksPage() {
             >
               <option value="">كل الأقسام</option>
               {categories.map((cat) => (
-                <option key={cat.slug} value={cat.slug}>
-                  {cat.icon} {cat.name}
-                </option>
+                 <option key={cat.slug} value={cat.slug}>
+                   {cat.icon} {cat.name}
+                 </option>
               ))}
             </select>
 
@@ -144,32 +174,18 @@ export default function BooksPage() {
         </div>
 
         {/* Content */}
-        {loading ? (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 mb-12">
-            {[...Array(6)].map((_, i) => (
-              <div key={i} className="bg-white rounded-2xl border border-slate-200/80 shadow-sm overflow-hidden h-full flex flex-col justify-between animate-pulse">
-                <div>
-                  <div className="h-64 bg-slate-100/60" />
-                  <div className="p-5 space-y-3">
-                    <div className="h-4 w-20 bg-slate-200 rounded ml-auto" />
-                    <div className="h-5 w-3/4 bg-slate-200 rounded ml-auto" />
-                    <div className="h-4 w-full bg-slate-200 rounded ml-auto" />
-                  </div>
-                </div>
-                <div className="px-5 pb-4 pt-3 border-t border-slate-100 flex justify-between items-center">
-                  <div className="h-4 w-12 bg-slate-200 rounded" />
-                  <div className="h-4 w-16 bg-slate-200 rounded" />
-                </div>
-              </div>
-            ))}
+        {loading && books.length === 0 ? (
+          <div className="flex flex-col items-center justify-center py-20 animate-in fade-in duration-300">
+            <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-indigo-600 mb-3"></div>
+            <p className="text-slate-500 text-sm">جاري التحميل...</p>
           </div>
         ) : books.length === 0 ? (
-          <div className="text-center py-20">
+          <div className="text-center py-20 animate-in fade-in duration-300">
             <h3 className="text-lg font-semibold text-slate-700 mb-1">لا توجد نتائج</h3>
             <p className="text-slate-500 text-sm">جرّب تغيير كلمة البحث أو الفلاتر.</p>
           </div>
         ) : (
-          <>
+          <div className={loading ? 'opacity-50 pointer-events-none transition-opacity duration-300' : 'transition-opacity duration-300'}>
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 mb-12">
               {books.map((book) => (
                 <BookCard key={book.id} book={book} />
@@ -201,7 +217,7 @@ export default function BooksPage() {
                 </button>
               </div>
             )}
-          </>
+          </div>
         )}
       </div>
     </div>

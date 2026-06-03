@@ -4,19 +4,29 @@ import Link from 'next/link'
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { Search, Compass, BookOpen, Layers, Menu, X, LibraryBig } from 'lucide-react'
+import { useTransitionContext } from '@/app/TransitionProvider'
 
 export function Navbar() {
   const [isOpen, setIsOpen] = useState(false)
   const [searchQuery, setSearchQuery] = useState('')
   const router = useRouter()
+  const { startTransition } = useTransitionContext()
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault()
     if (searchQuery.trim()) {
-      router.push(`/books?q=${encodeURIComponent(searchQuery.trim())}`)
+      startTransition('جاري البحث...')
+      router.push(`/books?search=${encodeURIComponent(searchQuery.trim())}`)
       setSearchQuery('')
       setIsOpen(false)
     }
+  }
+
+  const navigateTo = (e: React.MouseEvent, path: string, name: string) => {
+    e.preventDefault()
+    startTransition(`جاري الانتقال إلى ${name}...`)
+    router.push(path)
+    setIsOpen(false)
   }
 
   return (
@@ -25,7 +35,7 @@ export function Navbar() {
         <div className="flex justify-between items-center h-16">
           
           {/* Logo */}
-          <Link href="/" className="flex items-center gap-2 group">
+          <Link href="/" onClick={(e) => navigateTo(e, '/', 'الرئيسية')} className="flex items-center gap-2 group cursor-pointer">
             <div className="bg-gradient-to-br from-indigo-600 to-indigo-800 w-9 h-9 rounded-lg flex items-center justify-center group-hover:scale-105 transition-transform duration-200">
               <LibraryBig className="w-5 h-5 text-white" />
             </div>
@@ -37,22 +47,25 @@ export function Navbar() {
           {/* Navigation Links */}
           <div className="hidden md:flex items-center gap-6">
             <Link 
-              href="/books" 
-              className="text-slate-600 hover:text-indigo-600 transition-colors duration-200 py-2 font-medium text-sm flex items-center gap-1.5"
+              href="/books"
+              onClick={(e) => navigateTo(e, '/books', 'الكتب')}
+              className="text-slate-600 hover:text-indigo-600 transition-colors duration-200 py-2 font-medium text-sm flex items-center gap-1.5 cursor-pointer"
             >
               <BookOpen className="w-4 h-4" />
               الكتب
             </Link>
             <Link 
-              href="/tutorials" 
-              className="text-slate-600 hover:text-indigo-600 transition-colors duration-200 py-2 font-medium text-sm flex items-center gap-1.5"
+              href="/tutorials"
+              onClick={(e) => navigateTo(e, '/tutorials', 'الشروحات')}
+              className="text-slate-600 hover:text-indigo-600 transition-colors duration-200 py-2 font-medium text-sm flex items-center gap-1.5 cursor-pointer"
             >
               <Compass className="w-4 h-4" />
               الشروحات
             </Link>
             <Link 
-              href="/categories" 
-              className="text-slate-600 hover:text-indigo-600 transition-colors duration-200 py-2 font-medium text-sm flex items-center gap-1.5"
+              href="/categories"
+              onClick={(e) => navigateTo(e, '/categories', 'الأقسام')}
+              className="text-slate-600 hover:text-indigo-600 transition-colors duration-200 py-2 font-medium text-sm flex items-center gap-1.5 cursor-pointer"
             >
               <Layers className="w-4 h-4" />
               الأقسام
@@ -101,27 +114,27 @@ export function Navbar() {
             </form>
 
             <Link 
-              href="/books" 
-              onClick={() => setIsOpen(false)}
-              className="flex items-center justify-end gap-2 px-3 py-2.5 rounded-lg text-slate-700 hover:text-indigo-600 hover:bg-indigo-50/50 font-medium transition-colors duration-200"
+              href="/books"
+              onClick={(e) => navigateTo(e, '/books', 'الكتب')}
+              className="flex items-center justify-end gap-2 px-3 py-2.5 rounded-lg text-slate-700 hover:text-indigo-600 hover:bg-indigo-50/50 font-medium transition-colors duration-200 cursor-pointer"
             >
               الكتب
               <BookOpen className="w-4 h-4 text-slate-400" />
             </Link>
             
             <Link 
-              href="/tutorials" 
-              onClick={() => setIsOpen(false)}
-              className="flex items-center justify-end gap-2 px-3 py-2.5 rounded-lg text-slate-700 hover:text-indigo-600 hover:bg-indigo-50/50 font-medium transition-colors duration-200"
+              href="/tutorials"
+              onClick={(e) => navigateTo(e, '/tutorials', 'الشروحات')}
+              className="flex items-center justify-end gap-2 px-3 py-2.5 rounded-lg text-slate-700 hover:text-indigo-600 hover:bg-indigo-50/50 font-medium transition-colors duration-200 cursor-pointer"
             >
               الشروحات
               <Compass className="w-4 h-4 text-slate-400" />
             </Link>
 
             <Link 
-              href="/categories" 
-              onClick={() => setIsOpen(false)}
-              className="flex items-center justify-end gap-2 px-3 py-2.5 rounded-lg text-slate-700 hover:text-indigo-600 hover:bg-indigo-50/50 font-medium transition-colors duration-200"
+              href="/categories"
+              onClick={(e) => navigateTo(e, '/categories', 'الأقسام')}
+              className="flex items-center justify-end gap-2 px-3 py-2.5 rounded-lg text-slate-700 hover:text-indigo-600 hover:bg-indigo-50/50 font-medium transition-colors duration-200 cursor-pointer"
             >
               الأقسام
               <Layers className="w-4 h-4 text-slate-400" />

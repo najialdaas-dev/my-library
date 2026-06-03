@@ -1,34 +1,53 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { TutorialCard } from '@/components/TutorialCard'
 import { Tutorial, Category } from '@/lib/types'
 import { Navbar } from '@/components/Navbar'
 import { Search, ChevronLeft, ChevronRight, SlidersHorizontal } from 'lucide-react'
 
-// ذاكرة تخزين مؤقتة خارج المكون للاحتفاظ بالشروحات والأقسام عند التنقل والعودة لمنع وميض الصفحة وقفزات السكرول
-let cachedTutorials: Tutorial[] = []
-let cachedCategories: Category[] = []
-let cachedTotalPages = 1
-
 export default function TutorialsPage() {
-  const [tutorials, setTutorials] = useState<Tutorial[]>(cachedTutorials)
-  const [categories, setCategories] = useState<Category[]>(cachedCategories)
-  const [loading, setLoading] = useState(cachedTutorials.length === 0)
-  const [search, setSearch] = useState('')
-  const [selectedCategory, setSelectedCategory] = useState('')
-  const [difficulty, setDifficulty] = useState('')
-  const [page, setPage] = useState(1)
-  const [totalPages, setTotalPages] = useState(cachedTotalPages)
+  const [categories, setCategories] = useState<Category[]>([])
+  
+  // State Initialization from sessionStorage
+  const [tutorials, setTutorials] = useState<Tutorial[]>(() => {
+    if (typeof window !== 'undefined') {
+      const cached = sessionStorage.getItem('tutorials_state_data')
+      if (cached) return JSON.parse(cached)
+    }
+    return []
+  })
+  const [search, setSearch] = useState(() => {
+    if (typeof window !== 'undefined') return sessionStorage.getItem('tutorials_state_search') || ''
+    return ''
+  })
+  const [selectedCategory, setSelectedCategory] = useState(() => {
+    if (typeof window !== 'undefined') return sessionStorage.getItem('tutorials_state_category') || ''
+    return ''
+  })
+  const [difficulty, setDifficulty] = useState(() => {
+    if (typeof window !== 'undefined') return sessionStorage.getItem('tutorials_state_difficulty') || ''
+    return ''
+  })
+  const [page, setPage] = useState(() => {
+    if (typeof window !== 'undefined') return Number(sessionStorage.getItem('tutorials_state_page')) || 1
+    return 1
+  })
+  const [totalPages, setTotalPages] = useState(() => {
+    if (typeof window !== 'undefined') return Number(sessionStorage.getItem('tutorials_state_total')) || 1
+    return 1
+  })
+  
+  const [loading, setLoading] = useState(() => tutorials.length === 0)
+  
+  const abortControllerRef = useRef<AbortController | null>(null)
 
   useEffect(() => {
     const fetchCategories = async () => {
-      if (cachedCategories.length > 0) return
       try {
         const res = await fetch('/api/categories')
         const data = await res.json()
         setCategories(data || [])
-        cachedCategories = data || []
       } catch (err) {
         console.error('Error fetching categories:', err)
       }
@@ -37,12 +56,21 @@ export default function TutorialsPage() {
   }, [])
 
   useEffect(() => {
+    // Save state to session storage
+    if (typeof window !== 'undefined') {
+      sessionStorage.setItem('tutorials_state_search', search)
+      sessionStorage.setItem('tutorials_state_category', selectedCategory)
+      sessionStorage.setItem('tutorials_state_difficulty', difficulty)
+      sessionStorage.setItem('tutorials_state_page', page.toString())
+    }
+
     const fetchTutorials = async () => {
-      // إظهار الهيكل البراق فقط عند تغير الفلاتر أو عند التحميل الأول
-      const isInitialEmptyFilters = !search && !difficulty && !selectedCategory && page === 1;
-      if (!isInitialEmptyFilters || cachedTutorials.length === 0) {
-        setLoading(true)
+      if (abortControllerRef.current) {
+        abortControllerRef.current.abort()
       }
+      abortControllerRef.current = new AbortController()
+
+      setLoading(true)
       try {
         const params = new URLSearchParams()
         if (search) params.append('search', search)
@@ -51,23 +79,25 @@ export default function TutorialsPage() {
         params.append('page', page.toString())
         params.append('limit', '9')
 
-        const response = await fetch(`/api/tutorials?${params}`)
+        const response = await fetch(`/api/tutorials?${params}`, {
+          signal: abortControllerRef.current.signal
+        })
+        
         const data = await response.json()
-        const fetchedTutorials = data.data || []
-        setTutorials(fetchedTutorials)
+        const newTutorials = data.data || []
+        const newTotalPages = data.pagination?.pages || 1
         
-        if (isInitialEmptyFilters) {
-          cachedTutorials = fetchedTutorials
-        }
+        setTutorials(newTutorials)
+        setTotalPages(newTotalPages)
         
-        if (data.pagination) {
-          const pages = data.pagination.pages || 1
-          setTotalPages(pages)
-          if (isInitialEmptyFilters) {
-            cachedTotalPages = pages
-          }
+        if (typeof window !== 'undefined') {
+          sessionStorage.setItem('tutorials_state_data', JSON.stringify(newTutorials))
+          sessionStorage.setItem('tutorials_state_total', newTotalPages.toString())
         }
-      } catch (error) {
+      } catch (error: unknown) {
+        if (error instanceof Error && error.name === 'AbortError') {
+          return
+        }
         console.error('Error fetching tutorials:', error)
       } finally {
         setLoading(false)
@@ -144,32 +174,18 @@ export default function TutorialsPage() {
         </div>
 
         {/* Content */}
-        {loading ? (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 mb-12">
-            {[...Array(6)].map((_, i) => (
-              <div key={i} className="bg-white rounded-2xl border border-slate-200/80 shadow-sm overflow-hidden h-full flex flex-col justify-between animate-pulse">
-                <div>
-                  <div className="aspect-video bg-slate-100/60" />
-                  <div className="p-5 space-y-3">
-                    <div className="h-5 w-3/4 bg-slate-200 rounded ml-auto" />
-                    <div className="h-4 w-full bg-slate-200 rounded ml-auto" />
-                    <div className="h-4 w-16 bg-slate-200 rounded ml-auto" />
-                  </div>
-                </div>
-                <div className="px-5 pb-4 pt-3 border-t border-slate-100 flex justify-between items-center">
-                  <div className="h-4 w-12 bg-slate-200 rounded" />
-                  <div className="h-4 w-16 bg-slate-200 rounded" />
-                </div>
-              </div>
-            ))}
+        {loading && tutorials.length === 0 ? (
+          <div className="flex flex-col items-center justify-center py-20 animate-in fade-in duration-300">
+            <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-purple-600 mb-3"></div>
+            <p className="text-slate-500 text-sm">جاري التحميل...</p>
           </div>
         ) : tutorials.length === 0 ? (
-          <div className="text-center py-20">
+          <div className="text-center py-20 animate-in fade-in duration-300">
             <h3 className="text-lg font-semibold text-slate-700 mb-1">لا توجد نتائج</h3>
             <p className="text-slate-500 text-sm">جرّب تغيير كلمة البحث أو الفلاتر.</p>
           </div>
         ) : (
-          <>
+          <div className={loading ? 'opacity-50 pointer-events-none transition-opacity duration-300' : 'transition-opacity duration-300'}>
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 mb-12">
               {tutorials.map((tutorial) => (
                 <TutorialCard key={tutorial.id} tutorial={tutorial} />
@@ -201,7 +217,7 @@ export default function TutorialsPage() {
                 </button>
               </div>
             )}
-          </>
+          </div>
         )}
       </div>
     </div>

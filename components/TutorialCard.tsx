@@ -1,31 +1,24 @@
 'use client'
 
-import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import Image from 'next/image'
-import { usePathname } from 'next/navigation'
-import { Clock, Play, ArrowLeft, Loader2 } from 'lucide-react'
+import { useRouter } from 'next/navigation'
+import { Clock, Play, ArrowLeft } from 'lucide-react'
 import { Tutorial } from '@/lib/types'
-import { useNavigationLoader } from '@/components/NavigationLoader'
+import { useTransitionContext } from '@/app/TransitionProvider'
 
 export function TutorialCard({ tutorial }: { tutorial: Tutorial }) {
-  const [clicked, setClicked] = useState(false)
-  const { startLoading } = useNavigationLoader()
-  const pathname = usePathname()
+  const router = useRouter()
+  const { startTransition } = useTransitionContext()
 
-  useEffect(() => {
-    setClicked(false)
-  }, [pathname])
+  const handleNavigation = (e: React.MouseEvent) => {
+    e.preventDefault()
+    startTransition(`جاري تحميل شرح: ${tutorial.title}`)
+    router.push(`/tutorials/${tutorial.slug}`)
+  }
 
   return (
-    <Link 
-      href={`/tutorials/${tutorial.slug}`} 
-      onClick={() => {
-        setClicked(true)
-        startLoading('tutorial', tutorial.title)
-      }}
-      className="group block h-full"
-    >
+    <Link href={`/tutorials/${tutorial.slug}`} onClick={handleNavigation} className="group block h-full cursor-pointer">
       <div className="bg-white rounded-2xl border border-slate-200/80 shadow-sm group-hover:shadow-md group-hover:border-purple-300 group-hover:-translate-y-1.5 active:scale-[0.985] active:translate-y-0 transition-all duration-300 ease-out overflow-hidden h-full flex flex-col justify-between">
         
         <div>
@@ -99,17 +92,10 @@ export function TutorialCard({ tutorial }: { tutorial: Tutorial }) {
             </span>
           </div>
 
-          {clicked ? (
-            <span className="text-xs font-medium text-slate-500 flex items-center gap-1.5">
-              <Loader2 className="w-3.5 h-3.5 animate-spin text-purple-500" />
-              جاري الفتح...
-            </span>
-          ) : (
-            <span className="text-xs font-medium text-purple-600 flex items-center gap-1">
-              شاهد
-              <ArrowLeft className="w-3 h-3 group-hover:-translate-x-0.5 transition-transform duration-200" />
-            </span>
-          )}
+          <span className="text-xs font-medium text-purple-600 flex items-center gap-1">
+            شاهد
+            <ArrowLeft className="w-3 h-3 group-hover:-translate-x-0.5 transition-transform duration-200" />
+          </span>
         </div>
 
       </div>
