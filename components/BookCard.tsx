@@ -23,7 +23,7 @@ export function BookCard({ book }: { book: Book }) {
     startTransition(`جاري تحميل كتاب: ${book.title}`)
     setTimeout(() => {
       router.push(`/books/${book.slug}`)
-    }, 350)
+    }, 500)
   }
 
   return (

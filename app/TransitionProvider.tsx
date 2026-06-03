@@ -41,20 +41,7 @@ export function TransitionProvider({ children }: { children: React.ReactNode }) 
   useEffect(() => {
     const handlePopState = () => stopTransition()
     window.addEventListener('popstate', handlePopState)
-    return () => window.removeEventListener('popstate', handlePopState)
-  }, [stopTransition])
-
-  // Prevent scrolling when loading
-  useEffect(() => {
-    if (isLoading) {
-      document.body.style.overflow = 'hidden'
-    } else {
-      document.body.style.overflow = ''
-    }
-    return () => {
-      document.body.style.overflow = ''
-    }
-  }, [isLoading])
+  // Removed overflow:hidden to prevent layout shifts/scroll jumping
 
   return (
     <TransitionContext.Provider value={{ isLoading, message, startTransition, stopTransition }}>

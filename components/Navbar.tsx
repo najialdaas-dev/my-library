@@ -18,7 +18,7 @@ export function Navbar() {
       startTransition('جاري البحث...')
       setTimeout(() => {
         router.push(`/books?search=${encodeURIComponent(searchQuery.trim())}`)
-      }, 350)
+      }, 500)
       setSearchQuery('')
       setIsOpen(false)
     }
@@ -30,7 +30,7 @@ export function Navbar() {
     setIsOpen(false)
     setTimeout(() => {
       router.push(path)
-    }, 350)
+    }, 500)
   }
 
   return (
