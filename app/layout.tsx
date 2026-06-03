@@ -3,6 +3,7 @@ import "./globals.css";
 import { Footer } from "@/components/Footer";
 import { FloatingActions } from "@/components/FloatingActions";
 import { DevToolsBlocker } from "@/components/DevToolsBlocker";
+import { TransitionOverlay } from "@/components/TransitionOverlay";
 
 export const metadata: Metadata = {
   title: "مكتبة المهندس ناجي الدعاس",
@@ -49,6 +50,7 @@ export default function RootLayout({
     >
       <body className="min-h-full flex flex-col bg-slate-50 text-slate-900">
         <DevToolsBlocker />
+        <TransitionOverlay />
         <div className="flex-grow">{children}</div>
         <Footer />
         <FloatingActions />
