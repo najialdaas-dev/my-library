@@ -32,8 +32,10 @@ export function NavigationLoaderProvider({ children }: { children: React.ReactNo
       clearInterval(topBarIntervalRef.current)
     }
 
-    // إيصال شريط التحميل لـ 100% فوراً
-    setTopBarWidth(100)
+    // تأجيل التحديث لتفادي التداخل في رندرة React (Avoid synchronous setState in useEffect)
+    const completeTimer = setTimeout(() => {
+      setTopBarWidth(100)
+    }, 0)
     
     // تلاشي تدريجي مريح وناعم
     const fadeTimer = setTimeout(() => {
@@ -43,6 +45,7 @@ export function NavigationLoaderProvider({ children }: { children: React.ReactNo
     }, 250)
 
     return () => {
+      clearTimeout(completeTimer)
       clearTimeout(fadeTimer)
     }
   }, [pathname])
