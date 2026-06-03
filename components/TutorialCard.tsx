@@ -6,7 +6,7 @@ import { Tutorial } from '@/lib/types'
 export function TutorialCard({ tutorial }: { tutorial: Tutorial }) {
   return (
     <Link href={`/tutorials/${tutorial.slug}`} className="group block h-full">
-      <div className="bg-white rounded-2xl border border-slate-200/80 shadow-sm hover:shadow-lg hover:border-purple-200 transition-all duration-300 overflow-hidden h-full flex flex-col justify-between">
+      <div className="bg-white rounded-2xl border border-slate-200/80 shadow-sm group-hover:shadow-md group-hover:border-purple-300 group-hover:-translate-y-1.5 active:scale-[0.985] active:translate-y-0 transition-all duration-300 ease-out overflow-hidden h-full flex flex-col justify-between">
         
         <div>
           {/* Thumbnail */}
