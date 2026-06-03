@@ -44,6 +44,18 @@ export function TransitionProvider({ children }: { children: React.ReactNode }) 
     return () => window.removeEventListener('popstate', handlePopState)
   }, [stopTransition])
 
+  // Prevent scrolling when loading
+  useEffect(() => {
+    if (isLoading) {
+      document.body.style.overflow = 'hidden'
+    } else {
+      document.body.style.overflow = ''
+    }
+    return () => {
+      document.body.style.overflow = ''
+    }
+  }, [isLoading])
+
   return (
     <TransitionContext.Provider value={{ isLoading, message, startTransition, stopTransition }}>
       {children}
@@ -53,8 +65,8 @@ export function TransitionProvider({ children }: { children: React.ReactNode }) 
       </Suspense>
 
       {isLoading && (
-        <div className="fixed inset-0 z-[9999] flex flex-col items-center justify-center bg-slate-900/40 backdrop-blur-sm transition-all duration-300">
-          <div className="bg-white p-8 rounded-2xl shadow-2xl flex flex-col items-center gap-4 border border-slate-100/50 max-w-sm mx-4 text-center animate-in fade-in zoom-in-95 duration-200">
+        <div style={{ zIndex: 9999 }} className="fixed inset-0 flex flex-col items-center justify-center bg-slate-900/40 backdrop-blur-sm transition-opacity duration-300">
+          <div className="bg-white p-8 rounded-2xl shadow-2xl flex flex-col items-center gap-4 border border-slate-100/50 max-w-sm mx-4 text-center transition-transform duration-300">
             <div className="relative flex items-center justify-center w-16 h-16 bg-indigo-50 rounded-full mb-2">
               <Loader2 className="w-8 h-8 text-indigo-600 animate-spin" />
             </div>

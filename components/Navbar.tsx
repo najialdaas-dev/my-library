@@ -16,7 +16,9 @@ export function Navbar() {
     e.preventDefault()
     if (searchQuery.trim()) {
       startTransition('جاري البحث...')
-      router.push(`/books?search=${encodeURIComponent(searchQuery.trim())}`)
+      setTimeout(() => {
+        router.push(`/books?search=${encodeURIComponent(searchQuery.trim())}`)
+      }, 50)
       setSearchQuery('')
       setIsOpen(false)
     }
@@ -25,8 +27,10 @@ export function Navbar() {
   const navigateTo = (e: React.MouseEvent, path: string, name: string) => {
     e.preventDefault()
     startTransition(`جاري الانتقال إلى ${name}...`)
-    router.push(path)
     setIsOpen(false)
+    setTimeout(() => {
+      router.push(path)
+    }, 50)
   }
 
   return (
