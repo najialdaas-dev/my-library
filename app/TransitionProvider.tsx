@@ -41,6 +41,9 @@ export function TransitionProvider({ children }: { children: React.ReactNode }) 
   useEffect(() => {
     const handlePopState = () => stopTransition()
     window.addEventListener('popstate', handlePopState)
+    return () => window.removeEventListener('popstate', handlePopState)
+  }, [stopTransition])
+
   // Removed overflow:hidden to prevent layout shifts/scroll jumping
 
   return (
