@@ -44,25 +44,41 @@ export async function middleware(request: NextRequest) {
     )
   }
 
-  // Only protect /dashboard routes
-  if (pathname.startsWith('/dashboard')) {
+  const secretPath = process.env.ADMIN_SECRET_PATH || 'admin-naji'
+
+  // 1. حظر الدخول المباشر للمسارات الافتراضية للوحة التحكم لمنع الهجمات وإظهار 404
+  if (pathname === '/login' || pathname === '/dashboard' || pathname.startsWith('/dashboard/')) {
+    return NextResponse.rewrite(new URL('/404', request.url))
+  }
+
+  // 2. معالجة رابط تسجيل الدخول السري
+  if (pathname === `/${secretPath}/login`) {
+    return NextResponse.rewrite(new URL('/login', request.url))
+  }
+
+  // 3. معالجة وحماية لوحة التحكم السرية
+  if (pathname === `/${secretPath}/dashboard` || pathname.startsWith(`/${secretPath}/dashboard/`)) {
     const sessionCookie = request.cookies.get('admin_session')
     const adminPassword = process.env.ADMIN_SECRET_PASSWORD
 
     if (!adminPassword) {
-      const loginUrl = new URL('/login', request.url)
+      const loginUrl = new URL(`/${secretPath}/login`, request.url)
       loginUrl.searchParams.set('redirect', pathname)
       return NextResponse.redirect(loginUrl)
     }
 
     const expectedToken = await getExpectedToken(adminPassword)
 
-    // If no cookie or cookie doesn't match the hash, redirect to login
+    // إذا لم تكن هناك جلسة نشطة، التوجيه لصفحة تسجيل الدخول السرية
     if (!sessionCookie || sessionCookie.value !== expectedToken) {
-      const loginUrl = new URL('/login', request.url)
+      const loginUrl = new URL(`/${secretPath}/login`, request.url)
       loginUrl.searchParams.set('redirect', pathname)
       return NextResponse.redirect(loginUrl)
     }
+
+    // إذا كان مسجلاً الدخول، نقوم بعمل Rewrite داخلي للمسار الأصلي للوحة التحكم ليعمل بشكل سليم
+    const internalPath = pathname.replace(`/${secretPath}/dashboard`, '/dashboard')
+    return NextResponse.rewrite(new URL(internalPath, request.url))
   }
 
   return NextResponse.next()

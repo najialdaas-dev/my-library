@@ -9,7 +9,19 @@ import { Suspense } from 'react'
 function LoginForm() {
   const router = useRouter()
   const searchParams = useSearchParams()
-  const redirect = searchParams.get('redirect') || '/dashboard'
+  
+  // Extract the secret path segment dynamically from window location path
+  // E.g., /naji-secret-route/login -> naji-secret-route
+  const getSecretPath = () => {
+    if (typeof window !== 'undefined') {
+      const parts = window.location.pathname.split('/')
+      return parts[1] || 'admin-naji'
+    }
+    return 'admin-naji'
+  }
+  
+  const secretPath = getSecretPath()
+  const redirect = searchParams.get('redirect') || `/${secretPath}/dashboard`
 
   const [password, setPassword] = useState('')
   const [showPassword, setShowPassword] = useState(false)
