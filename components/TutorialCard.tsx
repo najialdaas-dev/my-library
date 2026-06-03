@@ -1,8 +1,9 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import Image from 'next/image'
+import { usePathname } from 'next/navigation'
 import { Clock, Play, ArrowLeft, Loader2 } from 'lucide-react'
 import { Tutorial } from '@/lib/types'
 import { useNavigationLoader } from '@/components/NavigationLoader'
@@ -10,6 +11,11 @@ import { useNavigationLoader } from '@/components/NavigationLoader'
 export function TutorialCard({ tutorial }: { tutorial: Tutorial }) {
   const [clicked, setClicked] = useState(false)
   const { startLoading } = useNavigationLoader()
+  const pathname = usePathname()
+
+  useEffect(() => {
+    setClicked(false)
+  }, [pathname])
 
   return (
     <Link 

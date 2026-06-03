@@ -6,22 +6,29 @@ import { Tutorial, Category } from '@/lib/types'
 import { Navbar } from '@/components/Navbar'
 import { Search, ChevronLeft, ChevronRight, SlidersHorizontal } from 'lucide-react'
 
+// ذاكرة تخزين مؤقتة خارج المكون للاحتفاظ بالشروحات والأقسام عند التنقل والعودة لمنع وميض الصفحة وقفزات السكرول
+let cachedTutorials: Tutorial[] = []
+let cachedCategories: Category[] = []
+let cachedTotalPages = 1
+
 export default function TutorialsPage() {
-  const [tutorials, setTutorials] = useState<Tutorial[]>([])
-  const [categories, setCategories] = useState<Category[]>([])
-  const [loading, setLoading] = useState(true)
+  const [tutorials, setTutorials] = useState<Tutorial[]>(cachedTutorials)
+  const [categories, setCategories] = useState<Category[]>(cachedCategories)
+  const [loading, setLoading] = useState(cachedTutorials.length === 0)
   const [search, setSearch] = useState('')
   const [selectedCategory, setSelectedCategory] = useState('')
   const [difficulty, setDifficulty] = useState('')
   const [page, setPage] = useState(1)
-  const [totalPages, setTotalPages] = useState(1)
+  const [totalPages, setTotalPages] = useState(cachedTotalPages)
 
   useEffect(() => {
     const fetchCategories = async () => {
+      if (cachedCategories.length > 0) return
       try {
         const res = await fetch('/api/categories')
         const data = await res.json()
         setCategories(data || [])
+        cachedCategories = data || []
       } catch (err) {
         console.error('Error fetching categories:', err)
       }
@@ -31,7 +38,11 @@ export default function TutorialsPage() {
 
   useEffect(() => {
     const fetchTutorials = async () => {
-      setLoading(true)
+      // إظهار الهيكل البراق فقط عند تغير الفلاتر أو عند التحميل الأول
+      const isInitialEmptyFilters = !search && !difficulty && !selectedCategory && page === 1;
+      if (!isInitialEmptyFilters || cachedTutorials.length === 0) {
+        setLoading(true)
+      }
       try {
         const params = new URLSearchParams()
         if (search) params.append('search', search)
@@ -42,9 +53,19 @@ export default function TutorialsPage() {
 
         const response = await fetch(`/api/tutorials?${params}`)
         const data = await response.json()
-        setTutorials(data.data || [])
+        const fetchedTutorials = data.data || []
+        setTutorials(fetchedTutorials)
+        
+        if (isInitialEmptyFilters) {
+          cachedTutorials = fetchedTutorials
+        }
+        
         if (data.pagination) {
-          setTotalPages(data.pagination.pages || 1)
+          const pages = data.pagination.pages || 1
+          setTotalPages(pages)
+          if (isInitialEmptyFilters) {
+            cachedTotalPages = pages
+          }
         }
       } catch (error) {
         console.error('Error fetching tutorials:', error)

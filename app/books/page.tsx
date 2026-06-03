@@ -6,22 +6,29 @@ import { Book, Category } from '@/lib/types'
 import { Navbar } from '@/components/Navbar'
 import { Search, ChevronLeft, ChevronRight, SlidersHorizontal } from 'lucide-react'
 
+// ذاكرة تخزين مؤقتة خارج المكون للاحتفاظ بالكتب والأقسام عند التنقل والعودة لمنع وميض الصفحة وقفزات السكرول
+let cachedBooks: Book[] = []
+let cachedCategories: Category[] = []
+let cachedTotalPages = 1
+
 export default function BooksPage() {
-  const [books, setBooks] = useState<Book[]>([])
-  const [categories, setCategories] = useState<Category[]>([])
-  const [loading, setLoading] = useState(true)
+  const [books, setBooks] = useState<Book[]>(cachedBooks)
+  const [categories, setCategories] = useState<Category[]>(cachedCategories)
+  const [loading, setLoading] = useState(cachedBooks.length === 0)
   const [search, setSearch] = useState('')
   const [selectedCategory, setSelectedCategory] = useState('')
   const [difficulty, setDifficulty] = useState('')
   const [page, setPage] = useState(1)
-  const [totalPages, setTotalPages] = useState(1)
+  const [totalPages, setTotalPages] = useState(cachedTotalPages)
 
   useEffect(() => {
     const fetchCategories = async () => {
+      if (cachedCategories.length > 0) return
       try {
         const res = await fetch('/api/categories')
         const data = await res.json()
         setCategories(data || [])
+        cachedCategories = data || []
       } catch (err) {
         console.error('Error fetching categories:', err)
       }
@@ -31,7 +38,11 @@ export default function BooksPage() {
 
   useEffect(() => {
     const fetchBooks = async () => {
-      setLoading(true)
+      // إظهار الهيكل البراق فقط عند تغير الفلاتر أو عند التحميل الأول
+      const isInitialEmptyFilters = !search && !difficulty && !selectedCategory && page === 1;
+      if (!isInitialEmptyFilters || cachedBooks.length === 0) {
+        setLoading(true)
+      }
       try {
         const params = new URLSearchParams()
         if (search) params.append('search', search)
@@ -42,9 +53,19 @@ export default function BooksPage() {
 
         const response = await fetch(`/api/books?${params}`)
         const data = await response.json()
-        setBooks(data.data || [])
+        const fetchedBooks = data.data || []
+        setBooks(fetchedBooks)
+        
+        if (isInitialEmptyFilters) {
+          cachedBooks = fetchedBooks
+        }
+        
         if (data.pagination) {
-          setTotalPages(data.pagination.pages || 1)
+          const pages = data.pagination.pages || 1
+          setTotalPages(pages)
+          if (isInitialEmptyFilters) {
+            cachedTotalPages = pages
+          }
         }
       } catch (error) {
         console.error('Error fetching books:', error)

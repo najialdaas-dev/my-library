@@ -1,8 +1,9 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import Image from 'next/image'
+import { usePathname } from 'next/navigation'
 import { Download, Eye, ArrowLeft, Star, CircleDot, Loader2 } from 'lucide-react'
 import { Book } from '@/lib/types'
 import { useNavigationLoader } from '@/components/NavigationLoader'
@@ -16,7 +17,12 @@ const difficultyConfig = {
 export function BookCard({ book }: { book: Book }) {
   const [clicked, setClicked] = useState(false)
   const { startLoading } = useNavigationLoader()
+  const pathname = usePathname()
   const difficulty = difficultyConfig[book.difficulty as keyof typeof difficultyConfig]
+
+  useEffect(() => {
+    setClicked(false)
+  }, [pathname])
 
   return (
     <Link 
