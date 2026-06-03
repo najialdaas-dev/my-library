@@ -16,7 +16,9 @@ export function Navbar() {
     e.preventDefault()
     if (searchQuery.trim()) {
       startTransition('جاري البحث...')
-      router.push(`/books?search=${encodeURIComponent(searchQuery.trim())}`)
+      setTimeout(() => {
+        router.push(`/books?search=${encodeURIComponent(searchQuery.trim())}`)
+      }, 250)
       setSearchQuery('')
       setIsOpen(false)
     }
@@ -26,7 +28,9 @@ export function Navbar() {
     e.preventDefault()
     startTransition(`جاري الانتقال إلى ${name}...`)
     setIsOpen(false)
-    router.push(path)
+    setTimeout(() => {
+      router.push(path)
+    }, 250)
   }
 
   return (

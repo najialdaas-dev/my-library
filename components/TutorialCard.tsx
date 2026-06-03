@@ -14,7 +14,9 @@ export function TutorialCard({ tutorial }: { tutorial: Tutorial }) {
   const handleNavigation = (e: React.MouseEvent) => {
     e.preventDefault()
     startTransition(`جاري تحميل شرح: ${tutorial.title}`)
-    router.push(`/tutorials/${tutorial.slug}`)
+    setTimeout(() => {
+      router.push(`/tutorials/${tutorial.slug}`)
+    }, 250)
   }
 
   return (
