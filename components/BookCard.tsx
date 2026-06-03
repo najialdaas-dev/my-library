@@ -21,9 +21,7 @@ export function BookCard({ book }: { book: Book }) {
   const handleNavigation = (e: React.MouseEvent) => {
     e.preventDefault()
     startTransition(`جاري تحميل كتاب: ${book.title}`)
-    setTimeout(() => {
-      router.push(`/books/${book.slug}`)
-    }, 500)
+    router.push(`/books/${book.slug}`)
   }
 
   return (
