@@ -4,20 +4,17 @@ import Link from 'next/link'
 import Image from 'next/image'
 import { Clock, Play, ArrowLeft } from 'lucide-react'
 import { Tutorial } from '@/lib/types'
+import { useNavigationLoader } from '@/components/NavigationLoader'
 
 export function TutorialCard({ tutorial }: { tutorial: Tutorial }) {
-  const handleLinkClick = () => {
-    if (typeof window !== 'undefined') {
-      window.dispatchEvent(
-        new CustomEvent('page-transition', {
-          detail: { message: `جاري الانتقال لشرح: ${tutorial.title}` }
-        })
-      )
-    }
-  }
+  const { startLoading } = useNavigationLoader()
 
   return (
-    <Link href={`/tutorials/${tutorial.slug}`} onClick={handleLinkClick} className="group block h-full">
+    <Link 
+      href={`/tutorials/${tutorial.slug}`} 
+      onClick={() => startLoading('tutorial', tutorial.title)}
+      className="group block h-full"
+    >
       <div className="bg-white rounded-2xl border border-slate-200/80 shadow-sm group-hover:shadow-md group-hover:border-purple-300 group-hover:-translate-y-1.5 active:scale-[0.985] active:translate-y-0 transition-all duration-300 ease-out overflow-hidden h-full flex flex-col justify-between">
         
         <div>

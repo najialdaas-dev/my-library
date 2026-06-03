@@ -4,6 +4,7 @@ import Link from 'next/link'
 import Image from 'next/image'
 import { Download, Eye, ArrowLeft, Star, CircleDot } from 'lucide-react'
 import { Book } from '@/lib/types'
+import { useNavigationLoader } from '@/components/NavigationLoader'
 
 const difficultyConfig = {
   Beginner: { label: 'مبتدئ', color: 'text-emerald-600 bg-emerald-50' },
@@ -12,20 +13,15 @@ const difficultyConfig = {
 } as const
 
 export function BookCard({ book }: { book: Book }) {
+  const { startLoading } = useNavigationLoader()
   const difficulty = difficultyConfig[book.difficulty as keyof typeof difficultyConfig]
 
-  const handleLinkClick = () => {
-    if (typeof window !== 'undefined') {
-      window.dispatchEvent(
-        new CustomEvent('page-transition', {
-          detail: { message: `جاري الانتقال لكتاب: ${book.title}` }
-        })
-      )
-    }
-  }
-
   return (
-    <Link href={`/books/${book.slug}`} onClick={handleLinkClick} className="group block h-full">
+    <Link 
+      href={`/books/${book.slug}`} 
+      onClick={() => startLoading('book', book.title)}
+      className="group block h-full"
+    >
       <div className="bg-white rounded-2xl border border-slate-200/80 shadow-sm group-hover:shadow-md group-hover:border-indigo-300 group-hover:-translate-y-1.5 active:scale-[0.985] active:translate-y-0 transition-all duration-300 ease-out overflow-hidden h-full flex flex-col justify-between">
         
         {/* Cover */}
