@@ -490,7 +490,7 @@ export default function DashboardPage() {
     setErrorMsg('')
 
     try {
-      const payload = {
+      const basePayload = {
         ...bookForm,
         tags: bookForm.tags.split(',').map((t) => t.trim()).filter(Boolean),
       }
@@ -498,9 +498,7 @@ export default function DashboardPage() {
       const isEditing = !!editingBookId;
       const url = '/api/books';
       const method = isEditing ? 'PUT' : 'POST';
-      if (isEditing) {
-        payload.id = editingBookId;
-      }
+      const payload = isEditing ? { ...basePayload, id: editingBookId } : basePayload;
 
       const res = await fetch(url, {
         method: method,
@@ -530,7 +528,7 @@ export default function DashboardPage() {
     setErrorMsg('')
 
     try {
-      const payload = {
+      const basePayload = {
         ...tutorialForm,
         tags: tutorialForm.tags.split(',').map((t) => t.trim()).filter(Boolean),
       }
@@ -538,9 +536,7 @@ export default function DashboardPage() {
       const isEditing = !!editingTutorialId;
       const url = '/api/tutorials';
       const method = isEditing ? 'PUT' : 'POST';
-      if (isEditing) {
-        payload.id = editingTutorialId;
-      }
+      const payload = isEditing ? { ...basePayload, id: editingTutorialId } : basePayload;
 
       const res = await fetch(url, {
         method: method,
