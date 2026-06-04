@@ -132,3 +132,55 @@ export async function DELETE(request: NextRequest) {
     return NextResponse.json({ error: 'فشل حذف الشرح من قاعدة البيانات' }, { status: 500 })
   }
 }
+
+// PUT - تعديل شرح (Admin only)
+export async function PUT(request: NextRequest) {
+  try {
+    if (!(await isAdminAuthenticated())) {
+      return NextResponse.json({ error: 'غير مصرح لك بإتمام هذه العملية (ممنوع)' }, { status: 401 })
+    }
+    const body = await request.json()
+    const id = body.id
+
+    if (!id) {
+      return NextResponse.json({ error: 'مُعرف الشرح مطلوب لإتمام العملية' }, { status: 400 })
+    }
+
+    // Auto-generate videoId from youtube URL if present
+    let videoId = body.videoId || null
+    if (body.videoUrl && !videoId) {
+      const regExp = /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|\&v=)([^#\&\?]*).*/;
+      const match = body.videoUrl.match(regExp);
+      if (match && match[2].length === 11) {
+        videoId = match[2];
+      }
+    }
+
+    const updatedTutorial = await prisma.tutorial.update({
+      where: { id },
+      data: {
+        title: body.title,
+        slug: body.slug.toLowerCase().replace(/\s+/g, '-'),
+        description: body.description,
+        content: body.content,
+        thumbnail: body.thumbnail || null,
+        videoUrl: body.videoUrl || null,
+        videoId: videoId,
+        categoryId: body.categoryId,
+        author: body.author || 'المهندس ناجي الدّعاس',
+        difficulty: body.difficulty || 'Intermediate',
+        tags: body.tags || [],
+        estimatedTime: parseInt(body.estimatedTime || '15'),
+      },
+      include: { category: true },
+    })
+
+    return NextResponse.json(updatedTutorial, { status: 200 })
+  } catch (error) {
+    console.error('Error updating tutorial:', error)
+    return NextResponse.json(
+      { error: 'فشل تعديل الشرح في قاعدة البيانات' },
+      { status: 500 }
+    )
+  }
+}

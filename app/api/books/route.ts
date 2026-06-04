@@ -129,3 +129,44 @@ export async function DELETE(request: NextRequest) {
     return NextResponse.json({ error: 'فشل حذف الكتاب من قاعدة البيانات' }, { status: 500 })
   }
 }
+
+// PUT - تعديل كتاب (Admin only)
+export async function PUT(request: NextRequest) {
+  try {
+    if (!(await isAdminAuthenticated())) {
+      return NextResponse.json({ error: 'غير مصرح لك بإتمام هذه العملية (ممنوع)' }, { status: 401 })
+    }
+    const body = await request.json()
+    const id = body.id
+
+    if (!id) {
+      return NextResponse.json({ error: 'مُعرف الكتاب مطلوب لإتمام العملية' }, { status: 400 })
+    }
+
+    const updatedBook = await prisma.book.update({
+      where: { id },
+      data: {
+        title: body.title,
+        slug: body.slug.toLowerCase().replace(/\s+/g, '-'),
+        description: body.description,
+        fileUrl: body.fileUrl,
+        fileName: body.fileName,
+        fileSize: parseInt(body.fileSize || '10485760'),
+        categoryId: body.categoryId,
+        coverImage: body.coverImage || null,
+        author: body.author || 'المهندس ناجي الدّعاس',
+        difficulty: body.difficulty || 'Intermediate',
+        tags: body.tags || [],
+      },
+      include: { category: true },
+    })
+
+    return NextResponse.json(updatedBook, { status: 200 })
+  } catch (error) {
+    console.error('Error updating book:', error)
+    return NextResponse.json(
+      { error: 'فشل تعديل الكتاب في قاعدة البيانات' },
+      { status: 500 }
+    )
+  }
+}

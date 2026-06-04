@@ -37,7 +37,16 @@ type Book = {
   id: string
   title: string
   slug: string
+  description: string
+  fileUrl: string
+  fileName: string
+  fileSize: number
+  coverImage: string | null
+  author: string | null
+  difficulty: string
+  tags: string[]
   downloadCount: number
+  categoryId: string
   category: Category
 }
 
@@ -45,7 +54,17 @@ type Tutorial = {
   id: string
   title: string
   slug: string
+  description: string
+  content: string
+  thumbnail: string | null
+  videoUrl: string | null
+  videoId: string | null
+  author: string | null
+  difficulty: string
+  estimatedTime: number | null
+  tags: string[]
   viewCount: number
+  categoryId: string
   category: Category
 }
 
@@ -59,6 +78,10 @@ export default function DashboardPage() {
   const [allBooks, setAllBooks] = useState<Book[]>([])
   const [allTutorials, setAllTutorials] = useState<Tutorial[]>([])
   const [loading, setLoading] = useState(true)
+
+  // Edit States
+  const [editingBookId, setEditingBookId] = useState<string | null>(null)
+  const [editingTutorialId, setEditingTutorialId] = useState<string | null>(null)
 
   const handleLogout = async () => {
     await fetch('/api/auth/logout', { method: 'POST' })
@@ -361,6 +384,88 @@ export default function DashboardPage() {
     }
   }
 
+  const handleEditBook = (id: string) => {
+    const bookToEdit = allBooks.find((b) => b.id === id)
+    if (!bookToEdit) return
+
+    setEditingBookId(id)
+    setBookForm({
+      title: bookToEdit.title,
+      slug: bookToEdit.slug,
+      description: bookToEdit.description,
+      author: bookToEdit.author || 'المهندس ناجي الدّعاس',
+      categoryId: bookToEdit.categoryId,
+      fileUrl: bookToEdit.fileUrl,
+      fileName: bookToEdit.fileName,
+      fileSize: bookToEdit.fileSize.toString(),
+      coverImage: bookToEdit.coverImage || '',
+      difficulty: bookToEdit.difficulty,
+      tags: bookToEdit.tags.join(', '),
+    })
+    setActiveTab('add-book')
+    setSuccessMsg('تم تعبئة بيانات الكتاب للتعديل')
+    window.scrollTo(0, 0)
+  }
+
+  const handleEditTutorial = (id: string) => {
+    const tutorialToEdit = allTutorials.find((t) => t.id === id)
+    if (!tutorialToEdit) return
+
+    setEditingTutorialId(id)
+    setTutorialForm({
+      title: tutorialToEdit.title,
+      slug: tutorialToEdit.slug,
+      description: tutorialToEdit.description,
+      content: tutorialToEdit.content,
+      author: tutorialToEdit.author || 'المهندس ناجي الدّعاس',
+      categoryId: tutorialToEdit.categoryId,
+      thumbnail: tutorialToEdit.thumbnail || '',
+      videoUrl: tutorialToEdit.videoUrl || '',
+      difficulty: tutorialToEdit.difficulty,
+      estimatedTime: tutorialToEdit.estimatedTime?.toString() || '15',
+      tags: tutorialToEdit.tags.join(', '),
+    })
+    setActiveTab('add-tutorial')
+    setSuccessMsg('تم تعبئة بيانات الشرح للتعديل')
+    window.scrollTo(0, 0)
+  }
+
+  const cancelBookEdit = () => {
+    setEditingBookId(null)
+    setBookForm({
+      title: '',
+      slug: '',
+      description: '',
+      author: 'المهندس ناجي الدّعاس',
+      categoryId: categories[0]?.id || '',
+      fileUrl: '/books/sample.pdf',
+      fileName: 'sample.pdf',
+      fileSize: '10485760',
+      coverImage: 'https://images.unsplash.com/photo-1543002588-bfa74002ed7e?auto=format&fit=crop&w=400&q=80',
+      difficulty: 'Intermediate',
+      tags: '',
+    })
+    setSuccessMsg('تم إلغاء التعديل')
+  }
+
+  const cancelTutorialEdit = () => {
+    setEditingTutorialId(null)
+    setTutorialForm({
+      title: '',
+      slug: '',
+      description: '',
+      content: '',
+      author: 'المهندس ناجي الدّعاس',
+      categoryId: categories[0]?.id || '',
+      thumbnail: 'https://images.unsplash.com/photo-1516116211223-5c359a36298a?auto=format&fit=crop&w=400&q=80',
+      videoUrl: '',
+      difficulty: 'Intermediate',
+      estimatedTime: '20',
+      tags: '',
+    })
+    setSuccessMsg('تم إلغاء التعديل')
+  }
+
   // Auto-generate Slugs
   const handleTitleChange = (type: 'book' | 'tutorial' | 'category', val: string) => {
     const cleanSlug = val
@@ -390,28 +495,25 @@ export default function DashboardPage() {
         tags: bookForm.tags.split(',').map((t) => t.trim()).filter(Boolean),
       }
 
-      const res = await fetch('/api/books', {
-        method: 'POST',
+      const isEditing = !!editingBookId;
+      const url = '/api/books';
+      const method = isEditing ? 'PUT' : 'POST';
+      if (isEditing) {
+        payload.id = editingBookId;
+      }
+
+      const res = await fetch(url, {
+        method: method,
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(payload),
       })
 
-      if (!res.ok) throw new Error('فشل إدخال بيانات الكتاب لقاعدة البيانات')
+      if (!res.ok) throw new Error(isEditing ? 'فشل تحديث بيانات الكتاب' : 'فشل إدخال بيانات الكتاب لقاعدة البيانات')
 
-      setSuccessMsg('🎉 تم إضافة الكتاب بنجاح ونشره في المكتبة!')
-      setBookForm({
-        title: '',
-        slug: '',
-        description: '',
-        author: 'المهندس ناجي الدّعاس',
-        categoryId: categories[0]?.id || '',
-        fileUrl: '/books/sample.pdf',
-        fileName: 'sample.pdf',
-        fileSize: '10485760',
-        coverImage: 'https://images.unsplash.com/photo-1543002588-bfa74002ed7e?auto=format&fit=crop&w=400&q=80',
-        difficulty: 'Intermediate',
-        tags: '',
-      })
+      setSuccessMsg(isEditing ? '🎉 تم تحديث بيانات الكتاب بنجاح!' : '🎉 تم إضافة الكتاب بنجاح ونشره في المكتبة!')
+      
+      // Reset form
+      cancelBookEdit()
       loadData()
     } catch (err) {
       const message = err instanceof Error ? err.message : 'حدث خطأ غير متوقع أثناء إضافة الكتاب'
@@ -433,28 +535,25 @@ export default function DashboardPage() {
         tags: tutorialForm.tags.split(',').map((t) => t.trim()).filter(Boolean),
       }
 
-      const res = await fetch('/api/tutorials', {
-        method: 'POST',
+      const isEditing = !!editingTutorialId;
+      const url = '/api/tutorials';
+      const method = isEditing ? 'PUT' : 'POST';
+      if (isEditing) {
+        payload.id = editingTutorialId;
+      }
+
+      const res = await fetch(url, {
+        method: method,
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(payload),
       })
 
-      if (!res.ok) throw new Error('فشل إدخال بيانات الشرح لقاعدة البيانات')
+      if (!res.ok) throw new Error(isEditing ? 'فشل تحديث الشرح' : 'فشل إدخال بيانات الشرح لقاعدة البيانات')
 
-      setSuccessMsg('🎉 تم إضافة الشرح بنجاح ونشره في المدوّنة التقنية!')
-      setTutorialForm({
-        title: '',
-        slug: '',
-        description: '',
-        content: '',
-        author: 'المهندس ناجي الدّعاس',
-        categoryId: categories[0]?.id || '',
-        thumbnail: 'https://images.unsplash.com/photo-1516116211223-5c359a36298a?auto=format&fit=crop&w=400&q=80',
-        videoUrl: '',
-        difficulty: 'Intermediate',
-        estimatedTime: '20',
-        tags: '',
-      })
+      setSuccessMsg(isEditing ? '🎉 تم تحديث الشرح التفاعلي بنجاح!' : '🎉 تم إضافة الشرح بنجاح ونشره في المدوّنة التقنية!')
+      
+      // Reset form
+      cancelTutorialEdit()
       loadData()
     } catch (err) {
       const message = err instanceof Error ? err.message : 'حدث خطأ غير متوقع أثناء إضافة الشرح'
@@ -524,7 +623,7 @@ export default function DashboardPage() {
                 : 'bg-white border border-slate-200 text-slate-700 hover:bg-slate-50 shadow-sm'
             }`}
           >
-            إضافة كتاب رقمي
+            {editingBookId ? 'تعديل كتاب رقمي' : 'إضافة كتاب رقمي'}
             <PlusCircle className="w-4 h-4" />
           </button>
 
@@ -536,7 +635,7 @@ export default function DashboardPage() {
                 : 'bg-white border border-slate-200 text-slate-700 hover:bg-slate-50 shadow-sm'
             }`}
           >
-            إضافة شرح تفاعلي
+            {editingTutorialId ? 'تعديل شرح تفاعلي' : 'إضافة شرح تفاعلي'}
             <PlusCircle className="w-4 h-4" />
           </button>
 
@@ -691,8 +790,8 @@ export default function DashboardPage() {
               <div className="bg-white rounded-[2.5rem] border border-slate-200/60 p-8 md:p-12 shadow-xl shadow-slate-100/50 text-right relative overflow-hidden">
                 <div className="absolute top-0 left-0 w-80 h-80 bg-indigo-500/5 rounded-full blur-[80px] pointer-events-none"></div>
 
-                <h3 className="text-2xl font-black text-slate-800 mb-2 relative z-10">إضافة كتاب رقمي جديد</h3>
-                <p className="text-slate-500 text-sm sm:text-base font-bold mb-8 relative z-10">املأ الحقول التالية لإدخال معلومات الكتاب وربطه بقاعدة البيانات.</p>
+                <h3 className="text-2xl font-black text-slate-800 mb-2 relative z-10">{editingBookId ? 'تعديل بيانات الكتاب الرقمي' : 'إضافة كتاب رقمي جديد'}</h3>
+                <p className="text-slate-500 text-sm sm:text-base font-bold mb-8 relative z-10">{editingBookId ? 'قم بتحديث المعلومات الحالية أدناه واضغط على حفظ.' : 'املأ الحقول التالية لإدخال معلومات الكتاب وربطه بقاعدة البيانات.'}</p>
                 
                 <form onSubmit={handleBookSubmit} className="space-y-6 relative z-10">
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -887,13 +986,24 @@ export default function DashboardPage() {
                     </div>
                   </div>
 
-                  <button
-                    type="submit"
-                    disabled={submitting}
-                    className="w-full md:w-auto px-10 py-4 bg-indigo-600 hover:bg-indigo-700 text-white font-black rounded-2xl shadow-lg shadow-indigo-600/20 hover:shadow-indigo-600/35 hover:-translate-y-0.5 transition disabled:opacity-50 flex items-center justify-center mr-auto ml-0 cursor-pointer"
-                  >
-                    {submitting ? 'جاري الحفظ الآمن...' : 'حفظ ونشر الكتاب الحقيقي'}
-                  </button>
+                  <div className="flex gap-4 items-center mr-auto ml-0 justify-end w-full md:w-auto">
+                    {editingBookId && (
+                      <button
+                        type="button"
+                        onClick={cancelBookEdit}
+                        className="px-6 py-4 bg-slate-100 hover:bg-slate-200 text-slate-600 font-black rounded-2xl transition cursor-pointer"
+                      >
+                        إلغاء التعديل
+                      </button>
+                    )}
+                    <button
+                      type="submit"
+                      disabled={submitting}
+                      className="px-10 py-4 bg-indigo-600 hover:bg-indigo-700 text-white font-black rounded-2xl shadow-lg shadow-indigo-600/20 hover:shadow-indigo-600/35 hover:-translate-y-0.5 transition disabled:opacity-50 flex items-center justify-center cursor-pointer"
+                    >
+                      {submitting ? 'جاري الحفظ الآمن...' : (editingBookId ? 'حفظ التعديلات' : 'حفظ ونشر الكتاب الحقيقي')}
+                    </button>
+                  </div>
                 </form>
               </div>
             )}
@@ -903,8 +1013,8 @@ export default function DashboardPage() {
               <div className="bg-white rounded-[2.5rem] border border-slate-200/60 p-8 md:p-12 shadow-xl shadow-slate-100/50 text-right relative overflow-hidden">
                 <div className="absolute top-0 left-0 w-80 h-80 bg-purple-500/5 rounded-full blur-[80px] pointer-events-none"></div>
 
-                <h3 className="text-2xl font-black text-slate-800 mb-2 relative z-10">إضافة شرح تقني تفاعلي</h3>
-                <p className="text-slate-500 text-sm sm:text-base font-bold mb-8 relative z-10">اكتب خطوات الشرح مع إمكانية إضافة رابط فيديو لشرح مرئي متكامل.</p>
+                <h3 className="text-2xl font-black text-slate-800 mb-2 relative z-10">{editingTutorialId ? 'تعديل الشرح التفاعلي' : 'إضافة شرح تقني تفاعلي'}</h3>
+                <p className="text-slate-500 text-sm sm:text-base font-bold mb-8 relative z-10">{editingTutorialId ? 'قم بتحديث معلومات الشرح أدناه واضغط حفظ التعديلات.' : 'اكتب خطوات الشرح مع إمكانية إضافة رابط فيديو لشرح مرئي متكامل.'}</p>
                 
                 <form onSubmit={handleTutorialSubmit} className="space-y-6 relative z-10">
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -1085,13 +1195,24 @@ export default function DashboardPage() {
                     </div>
                   </div>
 
-                  <button
-                    type="submit"
-                    disabled={submitting}
-                    className="w-full md:w-auto px-10 py-4 bg-indigo-600 hover:bg-indigo-700 text-white font-black rounded-2xl shadow-lg shadow-indigo-600/20 hover:shadow-indigo-600/35 hover:-translate-y-0.5 transition disabled:opacity-50 flex items-center justify-center mr-auto ml-0 cursor-pointer"
-                  >
-                    {submitting ? 'جاري نشر الشرح...' : 'حفظ ونشر الشرح التفاعلي'}
-                  </button>
+                  <div className="flex gap-4 items-center mr-auto ml-0 justify-end w-full md:w-auto">
+                    {editingTutorialId && (
+                      <button
+                        type="button"
+                        onClick={cancelTutorialEdit}
+                        className="px-6 py-4 bg-slate-100 hover:bg-slate-200 text-slate-600 font-black rounded-2xl transition cursor-pointer"
+                      >
+                        إلغاء التعديل
+                      </button>
+                    )}
+                    <button
+                      type="submit"
+                      disabled={submitting}
+                      className="px-10 py-4 bg-indigo-600 hover:bg-indigo-700 text-white font-black rounded-2xl shadow-lg shadow-indigo-600/20 hover:shadow-indigo-600/35 hover:-translate-y-0.5 transition disabled:opacity-50 flex items-center justify-center cursor-pointer"
+                    >
+                      {submitting ? 'جاري النشر...' : (editingTutorialId ? 'حفظ التعديلات' : 'حفظ ونشر الشرح التفاعلي')}
+                    </button>
+                  </div>
                 </form>
               </div>
             )}
@@ -1136,12 +1257,18 @@ export default function DashboardPage() {
                                 </span>
                               </td>
                               <td className="p-4 sm:p-5 text-center">{b.downloadCount}</td>
-                              <td className="p-4 sm:p-5 text-center">
+                              <td className="p-4 sm:p-5 text-center flex items-center justify-center gap-2">
+                                <button
+                                  onClick={() => handleEditBook(b.id)}
+                                  className="px-4 py-2 bg-indigo-50 hover:bg-indigo-100 text-indigo-600 border border-indigo-200 rounded-xl text-xs font-black transition-all hover:scale-102 active:scale-98 cursor-pointer"
+                                >
+                                  تعديل ✏️
+                                </button>
                                 <button
                                   onClick={() => handleDeleteItem(b.id, 'book')}
                                   className="px-4 py-2 bg-rose-50 hover:bg-rose-100 text-rose-600 border border-rose-200 rounded-xl text-xs font-black transition-all hover:scale-102 active:scale-98 cursor-pointer"
                                 >
-                                  حذف الكتاب 🗑️
+                                  حذف 🗑️
                                 </button>
                               </td>
                             </tr>
@@ -1188,12 +1315,18 @@ export default function DashboardPage() {
                                 </span>
                               </td>
                               <td className="p-4 sm:p-5 text-center">{t.viewCount}</td>
-                              <td className="p-4 sm:p-5 text-center">
+                              <td className="p-4 sm:p-5 text-center flex items-center justify-center gap-2">
+                                <button
+                                  onClick={() => handleEditTutorial(t.id)}
+                                  className="px-4 py-2 bg-purple-50 hover:bg-purple-100 text-purple-600 border border-purple-200 rounded-xl text-xs font-black transition-all hover:scale-102 active:scale-98 cursor-pointer"
+                                >
+                                  تعديل ✏️
+                                </button>
                                 <button
                                   onClick={() => handleDeleteItem(t.id, 'tutorial')}
                                   className="px-4 py-2 bg-rose-50 hover:bg-rose-100 text-rose-600 border border-rose-200 rounded-xl text-xs font-black transition-all hover:scale-102 active:scale-98 cursor-pointer"
                                 >
-                                  حذف الشرح 🗑️
+                                  حذف 🗑️
                                 </button>
                               </td>
                             </tr>
