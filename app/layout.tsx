@@ -48,6 +48,25 @@ export default function RootLayout({
       dir="rtl"
       className="h-full antialiased font-sans"
     >
+      <head>
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{
+            __html: JSON.stringify({
+              "@context": "https://schema.org",
+              "@type": "WebSite",
+              "name": "مكتبة المهندس ناجي الدعاس",
+              "url": "https://library.najialdaas.com/",
+              "author": {
+                "@type": "Person",
+                "name": "المهندس ناجي الدعاس",
+                "url": "https://najialdaas.com"
+              },
+              "description": "مكتبة تقنية توفر كتب وشروحات في البرمجة وتطوير الويب والأمن السيبراني والذكاء الاصطناعي."
+            })
+          }}
+        />
+      </head>
       <body className="min-h-full flex flex-col bg-slate-50 text-slate-900">
         <DevToolsBlocker />
         <TransitionProvider>
